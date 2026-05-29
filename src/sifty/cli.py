@@ -32,6 +32,14 @@ def _is_admin() -> bool:
         return False
 
 
+@app.command("tui")
+def tui_cmd() -> None:
+    """Launch the interactive full-screen TUI."""
+    from .tui.app import run  # lazy import: keeps CLI startup fast
+
+    run()
+
+
 @app.command("version")
 def version_cmd() -> None:
     """Show the Sifty version."""
