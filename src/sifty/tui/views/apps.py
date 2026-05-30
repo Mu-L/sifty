@@ -1,4 +1,4 @@
-"""Apps screen: list installed apps and uninstall the selected one."""
+"""Apps screen: search, sort, multi-select, and (bulk) uninstall."""
 
 from __future__ import annotations
 
@@ -7,38 +7,55 @@ import logging
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Horizontal
-from textual.widgets import Button, DataTable, Static
+from textual.fuzzy import Matcher
+from textual.widgets import Button, DataTable, Input, Static
 
-from ...core import apps as apps_mod
 from ...console import human_size
+from ...core import apps as apps_mod
 from ..modals import ConfirmModal
 from .base import BaseView
 
 logger = logging.getLogger("sifty.tui")
 
+_MARK = "✓"
+_UNMARK = " "
+
 
 class AppsView(BaseView):
+    BINDINGS = [("space", "toggle_mark", "Mark")]
+
     def compose(self) -> ComposeResult:
         yield Static("Installed apps", classes="title")
-        yield Static("Highlight a row, then Uninstall. Sorted by size.", classes="subtle")
+        yield Static(
+            "Type to filter · click a header to sort · Space to mark · "
+            "Uninstall acts on marked rows (or the highlighted one).",
+            classes="subtle",
+        )
+        yield Input(placeholder="Filter by name or publisher…", id="apps-filter")
         yield DataTable(id="apps-table")
         with Horizontal(classes="actions"):
             yield Button("Refresh", id="refresh")
+            yield Button("Clear marks", id="clear-marks")
             yield Button("Uninstall selected", id="uninstall", variant="warning")
         yield Static("", id="apps-status", classes="status")
 
     def on_mount(self) -> None:
         self._apps: list = []
+        self._filtered: list = []
+        self._marked: set[str] = set()
+        self._sort_key = "size"
+        self._sort_reverse = True
         table = self.query_one("#apps-table", DataTable)
         table.cursor_type = "row"
-        table.add_columns("Name", "Version", "Publisher", "Size")
+        self._cols = table.add_columns("", "Name", "Version", "Publisher", "Size")
         if self.workers_enabled():
             self.load()
 
+    # ----------------------------------------------------------------- data
     @work(thread=True, exclusive=True)
     def load(self) -> None:
         try:
-            apps = sorted(apps_mod.installed_apps(), key=lambda a: a.size_bytes, reverse=True)
+            apps = apps_mod.installed_apps()
         except Exception as exc:  # pragma: no cover - defensive
             logger.exception("Apps enumeration failed")
             self.app.call_from_thread(self._status, f"Failed: {exc}")
@@ -46,61 +63,144 @@ class AppsView(BaseView):
         self.app.call_from_thread(self._populate, apps)
 
     def _populate(self, apps) -> None:
-        self._apps = apps
+        self._apps = list(apps)
+        self._sort_apps()
+        self._apply_filter()
+
+    def _sort_apps(self) -> None:
+        if self._sort_key == "name":
+            self._apps.sort(key=lambda a: a.name.lower(), reverse=self._sort_reverse)
+        else:
+            self._apps.sort(key=lambda a: a.size_bytes, reverse=self._sort_reverse)
+
+    def _apply_filter(self) -> None:
+        query = self.query_one("#apps-filter", Input).value.strip()
+        if not query:
+            self._filtered = list(self._apps)
+        else:
+            matcher = Matcher(query)
+            scored = [(matcher.match(f"{a.name} {a.publisher}"), a) for a in self._apps]
+            self._filtered = [a for score, a in sorted(scored, key=lambda t: t[0], reverse=True) if score > 0]
+        self._rebuild_table()
+
+    def _rebuild_table(self) -> None:
         table = self.query_one("#apps-table", DataTable)
         table.clear()
-        for a in apps:
+        for a in self._filtered:
+            mark = _MARK if a.name in self._marked else _UNMARK
             table.add_row(
-                a.name,
-                a.version or "—",
-                a.publisher or "—",
+                mark, a.name, a.version or "—", a.publisher or "—",
                 human_size(a.size_bytes) if a.size_bytes else "—",
+                key=a.name,
             )
-        self._status(f"{len(apps)} apps installed")
+        marked = len(self._marked)
+        suffix = f" · {marked} marked" if marked else ""
+        self._status(f"{len(self._filtered)} of {len(self._apps)} apps{suffix}")
 
     def _status(self, msg: str) -> None:
         self.query_one("#apps-status", Static).update(msg)
 
-    def _selected_app(self):
+    # -------------------------------------------------------------- selection
+    def _highlighted_app(self):
         table = self.query_one("#apps-table", DataTable)
         if table.row_count == 0:
             return None
         idx = table.cursor_row
-        if idx is not None and 0 <= idx < len(self._apps):
-            return self._apps[idx]
+        if idx is not None and 0 <= idx < len(self._filtered):
+            return self._filtered[idx]
         return None
+
+    # Kept for tests / callers that want the current row.
+    _selected_app = _highlighted_app
+
+    def _apps_for_action(self) -> list:
+        if self._marked:
+            return [a for a in self._apps if a.name in self._marked]
+        app_obj = self._highlighted_app()
+        return [app_obj] if app_obj else []
+
+    def action_toggle_mark(self) -> None:
+        app_obj = self._highlighted_app()
+        if not app_obj:
+            return
+        table = self.query_one("#apps-table", DataTable)
+        if app_obj.name in self._marked:
+            self._marked.discard(app_obj.name)
+            table.update_cell(app_obj.name, self._cols[0], _UNMARK)
+        else:
+            self._marked.add(app_obj.name)
+            table.update_cell(app_obj.name, self._cols[0], _MARK)
+        marked = len(self._marked)
+        self._status(f"{len(self._filtered)} of {len(self._apps)} apps · {marked} marked")
+
+    # ----------------------------------------------------------------- events
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "apps-filter":
+            self._apply_filter()
+
+    def on_data_table_header_selected(self, event: DataTable.HeaderSelected) -> None:
+        if event.column_index == 1:
+            self._set_sort("name")
+        elif event.column_index == 4:
+            self._set_sort("size")
+
+    def _set_sort(self, key: str) -> None:
+        if self._sort_key == key:
+            self._sort_reverse = not self._sort_reverse
+        else:
+            self._sort_key = key
+            self._sort_reverse = (key == "size")
+        self._sort_apps()
+        self._apply_filter()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "refresh":
             self._status("Refreshing…")
             self.load()
+        elif event.button.id == "clear-marks":
+            self._marked.clear()
+            self._rebuild_table()
         elif event.button.id == "uninstall":
             self._uninstall_flow()  # launches the worker below
 
+    # --------------------------------------------------------------- uninstall
     @work
     async def _uninstall_flow(self) -> None:
-        # Must run in a worker: push_screen_wait() requires a worker context.
-        app_obj = self._selected_app()
-        if not app_obj:
-            self._status("No app selected.")
+        # Worker context required for push_screen_wait.
+        targets = self._apps_for_action()
+        if not targets:
+            self._status("Nothing selected.")
             return
+        names = [a.name for a in targets]
+        listing = "\n".join(f"  • {n}" for n in names[:10])
+        if len(names) > 10:
+            listing += f"\n  …and {len(names) - 10} more"
         ok = await self.app.push_screen_wait(
             ConfirmModal(
-                f"Uninstall '{app_obj.name}'?\nThis runs winget and may open the "
-                f"app's own uninstaller.",
+                f"Uninstall {len(names)} app(s)? This runs winget and may open "
+                f"each app's own uninstaller.\n\n{listing}",
                 confirm_label="Uninstall",
             )
         )
         if ok:
-            self._status(f"Uninstalling {app_obj.name}…")
-            self.do_uninstall(app_obj.name)
+            self.do_bulk_uninstall(names)
 
     @work(thread=True, exclusive=True)
-    def do_uninstall(self, name: str) -> None:
-        ok, msg = apps_mod.uninstall_app(name)
-        self.app.call_from_thread(self._after_uninstall, ok, msg)
+    def do_bulk_uninstall(self, names: list[str]) -> None:
+        results = []
+        for i, name in enumerate(names, 1):
+            self.app.call_from_thread(self._status, f"Uninstalling {i}/{len(names)}: {name}…")
+            results.append((name, *apps_mod.uninstall_app(name)))
+        self.app.call_from_thread(self._after_bulk, results)
 
-    def _after_uninstall(self, ok: bool, msg: str) -> None:
-        self.app.notify(msg, severity="information" if ok else "error", title="Uninstall")
-        if ok:
-            self.load()
+    def _after_bulk(self, results) -> None:
+        succeeded = sum(1 for _n, ok, _m in results if ok)
+        failed = len(results) - succeeded
+        severity = "information" if failed == 0 else "warning"
+        self.app.notify(
+            f"Uninstalled {succeeded}/{len(results)}"
+            + (f" · {failed} failed" if failed else ""),
+            severity=severity, title="Uninstall",
+        )
+        self._marked.clear()
+        self.load()

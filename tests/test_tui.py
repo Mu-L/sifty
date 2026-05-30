@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from textual.widgets import DataTable, SelectionList, Static, Tree
+from textual.widgets import DataTable, Input, SelectionList, Static, Tree
 
 from sifty.core.apps import InstalledApp
 from sifty.core.junk import CategoryScan, JunkCategory
@@ -92,6 +92,31 @@ async def test_apps_view_populates_table():
         table = pilot.app.query_one("#apps-table", DataTable)
         assert table.row_count == 2
         assert view._selected_app() is not None  # cursor on a row
+
+
+async def test_apps_filter_narrows_and_marking_selects():
+    apps = [
+        InstalledApp("Alpha", "1", "Pub", 10, "", "HKCU"),
+        InstalledApp("Beta", "1", "Pub", 20, "", "HKCU"),
+    ]
+    async with _make_app().run_test() as pilot:
+        await pilot.app.show("apps")
+        await pilot.pause()
+        view = pilot.app.query_one(AppsView)
+        view._populate(apps)
+        await pilot.pause()
+        table = pilot.app.query_one("#apps-table", DataTable)
+        assert table.row_count == 2
+
+        # Fuzzy filter narrows the table.
+        pilot.app.query_one("#apps-filter", Input).value = "alph"
+        await pilot.pause()
+        assert table.row_count == 1
+
+        # Marking the highlighted row drives the bulk action target.
+        view.action_toggle_mark()
+        await pilot.pause()
+        assert {a.name for a in view._apps_for_action()} == {"Alpha"}
 
 
 async def test_updates_view_populates_table():
