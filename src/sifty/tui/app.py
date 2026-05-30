@@ -16,6 +16,7 @@ from textual.widgets import Footer, Header, Label, ListItem, ListView
 from textual.worker import Worker, WorkerState
 
 from ..windows.admin import is_admin, relaunch_as_admin
+from .commands import SiftyCommands
 from .views import VIEWS
 
 logger = logging.getLogger("sifty.tui")
@@ -54,6 +55,7 @@ class SiftyApp(App):
     """The top-level Sifty terminal application."""
 
     CSS_PATH = "styles.tcss"
+    COMMANDS = App.COMMANDS | {SiftyCommands}
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("f2", "elevate", "Admin"),

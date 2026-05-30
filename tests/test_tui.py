@@ -15,12 +15,33 @@ from sifty.core.apps import InstalledApp
 from sifty.core.junk import CategoryScan, JunkCategory
 from sifty.core.updates import Upgrade
 from sifty.tui.app import SECTIONS, SiftyApp
+from sifty.tui.commands import SiftyCommands, _entries
 from sifty.tui.modals import ConfirmModal
 from sifty.tui.views import AppsView, DiskView, HomeView, JunkView, UpdatesView, VIEWS
 
 
 def _make_app() -> SiftyApp:
     return SiftyApp(start_workers=False)
+
+
+def test_command_palette_entries_cover_sections_and_admin():
+    class _Dummy:
+        async def show(self, key):
+            ...
+
+        def action_elevate(self):
+            ...
+
+    entries = _entries(_Dummy())
+    titles = [t for t, _h, _c in entries]
+    assert "Go to Home" in titles
+    assert "Restart as administrator" in titles
+    assert len(entries) == len(SECTIONS) + 1
+
+
+async def test_command_palette_registered():
+    async with _make_app().run_test() as pilot:
+        assert SiftyCommands in type(pilot.app).COMMANDS
 
 
 async def test_app_boots_with_full_sidebar():
