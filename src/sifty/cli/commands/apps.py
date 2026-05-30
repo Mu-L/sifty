@@ -7,6 +7,7 @@ from rich.table import Table
 
 from ...console import confirm, console, error, human_size, success, warn
 from ...core import apps
+from .. import output
 
 app = typer.Typer(help="List, inspect, and remove installed apps and startup items.")
 
@@ -23,6 +24,14 @@ def list_cmd(
     if limit:
         items = items[:limit]
 
+    if output.json_enabled():
+        output.emit([
+            {"name": a.name, "version": a.version, "publisher": a.publisher,
+             "size_bytes": a.size_bytes}
+            for a in items
+        ])
+        return
+
     table = Table(title=f"Installed apps ({len(items)})")
     table.add_column("Name")
     table.add_column("Version", style="dim")
@@ -37,6 +46,12 @@ def list_cmd(
 def startup_cmd() -> None:
     """List programs that launch at startup."""
     entries = apps.startup_entries()
+    if output.json_enabled():
+        output.emit([
+            {"name": e.name, "location": e.location, "command": e.command}
+            for e in entries
+        ])
+        return
     table = Table(title=f"Startup programs ({len(entries)})")
     table.add_column("Name")
     table.add_column("Origin", style="dim")

@@ -10,6 +10,7 @@ from rich.tree import Tree
 
 from ...console import console, human_size, warn
 from ...core import disk
+from .. import output
 
 app = typer.Typer(help="Analyze disks: volume usage, biggest items, duplicates.")
 
@@ -17,6 +18,16 @@ app = typer.Typer(help="Analyze disks: volume usage, biggest items, duplicates."
 @app.command("volumes")
 def volumes_cmd() -> None:
     """Show used/free/total for each volume."""
+    if output.json_enabled():
+        output.emit([
+            {
+                "drive": v.mountpoint, "fstype": v.fstype, "used": v.used,
+                "free": v.free, "total": v.total, "percent": round(v.percent, 1),
+            }
+            for v in disk.volumes()
+        ])
+        return
+
     table = Table(title="Volumes")
     table.add_column("Drive")
     table.add_column("FS", style="dim")
@@ -44,6 +55,17 @@ def analyze_cmd(
         warn(f"Path does not exist: {path}")
         raise typer.Exit(1)
 
+    if output.json_enabled():
+        items = disk.biggest(path, top)
+        output.emit({
+            "path": str(path),
+            "items": [
+                {"name": e.name, "path": str(e), "size_bytes": s, "is_dir": e.is_dir()}
+                for e, s in items
+            ],
+        })
+        return
+
     with console.status(f"Scanning {path}…"):
         items = disk.biggest(path, top)
 
@@ -64,6 +86,21 @@ def duplicates_cmd(
     if not path.exists():
         warn(f"Path does not exist: {path}")
         raise typer.Exit(1)
+
+    if output.json_enabled():
+        groups = disk.find_duplicates(path, min_size)
+        payload = []
+        reclaimable = 0
+        for paths in groups.values():
+            each = disk._entry_size(paths[0])
+            wasted = each * (len(paths) - 1)
+            reclaimable += wasted
+            payload.append({
+                "copies": len(paths), "each_bytes": each,
+                "wasted_bytes": wasted, "paths": [str(p) for p in paths],
+            })
+        output.emit({"groups": payload, "reclaimable_bytes": reclaimable})
+        return
 
     with console.status(f"Hashing files under {path}…"):
         groups = disk.find_duplicates(path, min_size)

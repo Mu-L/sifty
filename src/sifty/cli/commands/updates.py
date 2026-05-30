@@ -7,6 +7,7 @@ from rich.table import Table
 
 from ...console import confirm, console, error, success, warn
 from ...core import updates
+from .. import output
 
 app = typer.Typer(help="Check and apply application updates (winget).")
 
@@ -17,8 +18,18 @@ def check_cmd() -> None:
     from ...windows import winget
 
     if not winget.available():
-        error("winget is not available on this system.")
+        if output.json_enabled():
+            output.emit({"error": "winget is not available"})
+        else:
+            error("winget is not available on this system.")
         raise typer.Exit(1)
+
+    if output.json_enabled():
+        output.emit([
+            {"name": u.name, "id": u.id, "current": u.current, "available": u.available}
+            for u in updates.list_upgrades()
+        ])
+        return
 
     with console.status("Checking for updates…"):
         upgrades = updates.list_upgrades()

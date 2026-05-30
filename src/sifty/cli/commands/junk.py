@@ -7,6 +7,7 @@ from rich.table import Table
 
 from ...console import confirm, console, human_size, success, warn
 from ...core import junk
+from .. import output
 
 app = typer.Typer(help="Scan and clean junk files (temp, caches, update cache).")
 
@@ -18,6 +19,19 @@ def scan_cmd(
     """Show how much junk each category holds, without deleting anything."""
     only = set(category) if category else None
     results = junk.scan(only=only)
+
+    if output.json_enabled():
+        output.emit([
+            {
+                "key": r.category.key,
+                "label": r.category.label,
+                "files": r.file_count,
+                "size_bytes": r.size,
+                "requires_admin": r.category.requires_admin,
+            }
+            for r in results
+        ])
+        return
 
     table = Table(title="Junk scan")
     table.add_column("Category")

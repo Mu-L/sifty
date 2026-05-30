@@ -10,6 +10,7 @@ from .. import __version__
 from ..console import console, error, warn
 from ..infra.logging import get_logger, log_file, setup_logging
 from ..windows.admin import is_admin, relaunch_as_admin
+from . import output
 from .commands import ai_group, apps, disk, junk, organize, updates
 
 app = typer.Typer(
@@ -36,9 +37,13 @@ def main(
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Also write debug logs to stderr.",
     ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Emit machine-readable JSON (read-only commands).",
+    ),
 ) -> None:
     """Sifty — AI-assisted Windows maintenance."""
     setup_logging(verbose)
+    output.set_json(json_output)
     get_logger("sifty.cli").debug("invoked: %s", " ".join(sys.argv[1:]))
     if admin and not is_admin():
         if relaunch_as_admin():
@@ -67,10 +72,21 @@ def doctor_cmd() -> None:
     from ..windows import winget
 
     admin = is_admin()
-    console.print(f"Administrator: {'[green]yes[/green]' if admin else '[yellow]no[/yellow] (some junk/uninstall actions need it)'}")
-    console.print(f"winget: {'[green]available[/green]' if winget.available() else '[red]missing[/red]'}")
+    has_winget = winget.available()
     client = OllamaClient.from_config()
-    console.print(f"Ollama ({client.model}): {'[green]reachable[/green]' if client.is_available() else '[yellow]not running[/yellow]'}")
+    ollama = client.is_available()
+    if output.json_enabled():
+        output.emit({
+            "administrator": admin,
+            "winget": has_winget,
+            "ollama_model": client.model,
+            "ollama_reachable": ollama,
+            "log_file": str(log_file()),
+        })
+        return
+    console.print(f"Administrator: {'[green]yes[/green]' if admin else '[yellow]no[/yellow] (some junk/uninstall actions need it)'}")
+    console.print(f"winget: {'[green]available[/green]' if has_winget else '[red]missing[/red]'}")
+    console.print(f"Ollama ({client.model}): {'[green]reachable[/green]' if ollama else '[yellow]not running[/yellow]'}")
     console.print(f"Log file: [dim]{log_file()}[/dim]")
 
 
