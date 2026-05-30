@@ -61,10 +61,20 @@ sifty organize apply   C:\Users\you\Downloads --by date
 # AI (requires Ollama running)
 sifty ai status
 sifty ai ask "what can I safely delete on my C drive?" --path C:\
+
+# Scripting — machine-readable JSON on read-only commands
+sifty --json disk volumes
+sifty --json junk scan
+sifty --json apps list --by-size
 ```
 
 Some operations (Windows temp, update cache, certain uninstalls) need an
 **Administrator** terminal — `sifty doctor` tells you if you're elevated.
+
+In the **TUI** (`sifty tui`): press **Ctrl+P** for the command palette (jump to
+any screen / run any action), use **Browse…** on the Disk screen to pick a folder,
+and on the Apps screen type to filter, click a header to sort, **Space** to mark
+rows, then bulk-uninstall.
 
 ## AI setup (optional)
 
