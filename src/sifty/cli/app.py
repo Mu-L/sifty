@@ -12,7 +12,7 @@ from ..core import history, undo
 from ..infra.logging import get_logger, log_file, setup_logging
 from ..windows.admin import is_admin, relaunch_as_admin
 from . import output
-from .commands import ai_group, apps, cleanup, disk, junk, organize, updates
+from .commands import ai_group, apps, cleanup, disk, junk, organize, startup, updates
 
 app = typer.Typer(
     name="sifty",
@@ -25,6 +25,7 @@ app.add_typer(junk.app, name="junk")
 app.add_typer(disk.app, name="disk")
 app.add_typer(cleanup.app, name="cleanup")
 app.add_typer(apps.app, name="apps")
+app.add_typer(startup.app, name="startup")
 app.add_typer(updates.app, name="update")
 app.add_typer(organize.app, name="organize")
 app.add_typer(ai_group.app, name="ai")

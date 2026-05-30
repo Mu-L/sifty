@@ -18,6 +18,7 @@ from sifty.core.updates import Upgrade
 from sifty.tui.app import SECTIONS, SiftyApp
 from sifty.tui.commands import SiftyCommands, _entries
 from sifty.tui.modals import ConfirmModal
+from sifty.core.models import StartupEntry
 from sifty.tui.views import (
     AppsView,
     CleanupView,
@@ -25,6 +26,7 @@ from sifty.tui.views import (
     HomeView,
     JunkView,
     ReportsView,
+    StartupView,
     UpdatesView,
     VIEWS,
 )
@@ -173,6 +175,21 @@ async def test_cleanup_duplicates_premark():
         view._populate(rows, premark=True)  # redundant copies pre-marked
         await pilot.pause()
         assert view._marked == {str(rows[0][0])}
+
+
+async def test_startup_view_populates():
+    entries = [
+        StartupEntry("Spotify", "C:/spotify.exe", "HKCU Run", enabled=True, kind="hkcu-run"),
+        StartupEntry("OldThing", "C:/old.exe", "HKCU Run (disabled)", enabled=False, kind="hkcu-run"),
+    ]
+    async with _make_app().run_test() as pilot:
+        await pilot.app.show("startup")
+        await pilot.pause()
+        view = pilot.app.query_one(StartupView)
+        view._populate(entries)
+        await pilot.pause()
+        table = pilot.app.query_one("#startup-table", DataTable)
+        assert table.row_count == 2
 
 
 async def test_reports_view_populates():

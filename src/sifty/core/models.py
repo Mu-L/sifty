@@ -55,7 +55,9 @@ class InstalledApp:
 class StartupEntry:
     name: str
     command: str
-    location: str  # human-readable origin (registry hive or "Startup folder")
+    location: str          # human-readable origin (registry hive or "Startup folder")
+    enabled: bool = True
+    kind: str = "run"      # "hkcu-run" | "hklm-run" | "folder"
 
 
 @dataclass

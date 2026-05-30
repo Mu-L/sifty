@@ -9,6 +9,7 @@ from .disk import DiskView
 from .home import HomeView
 from .junk import JunkView
 from .reports import ReportsView
+from .startup import StartupView
 from .updates import UpdatesView
 
 # Maps a sidebar nav key to its view class.
@@ -18,6 +19,7 @@ VIEWS = {
     "disk": DiskView,
     "cleanup": CleanupView,
     "apps": AppsView,
+    "startup": StartupView,
     "updates": UpdatesView,
     "reports": ReportsView,
     "ai": AIView,
@@ -30,6 +32,7 @@ __all__ = [
     "DiskView",
     "CleanupView",
     "AppsView",
+    "StartupView",
     "UpdatesView",
     "ReportsView",
     "AIView",
