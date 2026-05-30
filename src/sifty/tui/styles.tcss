@@ -99,16 +99,12 @@ DataTable {
     min-height: 8;
 }
 
-/* Home quick-access grid of screen buttons. */
-#home-nav {
-    grid-size: 3;
-    grid-gutter: 1 2;
-    grid-rows: 3;
+/* Home dashboard: grid of at-a-glance stat cards. */
+#home-stats {
+    grid-size: 2;
+    grid-gutter: 0 2;
+    grid-rows: auto;
     height: auto;
-}
-
-#home-nav Button {
-    width: 100%;
 }
 
 SelectionList {
