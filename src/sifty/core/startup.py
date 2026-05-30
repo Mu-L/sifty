@@ -53,7 +53,7 @@ def list_entries() -> list[StartupEntry]:
     folder = _startup_folder()
     if folder and folder.exists():
         for item in folder.iterdir():
-            if item.is_file():
+            if item.is_file() and item.name.lower() != "desktop.ini":
                 entries.append(StartupEntry(item.stem, str(item), "Startup folder", enabled=True, kind="folder"))
     for item in _disabled_folder().iterdir():
         if item.is_file():

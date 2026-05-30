@@ -83,6 +83,15 @@ class CleanResult:
 
 
 @dataclass
+class ServiceInfo:
+    name: str
+    label: str
+    description: str
+    start_type: str   # "auto" | "manual" | "disabled" | "absent"
+    present: bool
+
+
+@dataclass
 class Run:
     id: int
     ts: str           # ISO timestamp (UTC)

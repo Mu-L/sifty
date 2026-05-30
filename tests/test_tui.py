@@ -26,10 +26,12 @@ from sifty.tui.views import (
     HomeView,
     JunkView,
     ReportsView,
+    ServicesView,
     StartupView,
     UpdatesView,
     VIEWS,
 )
+from sifty.core.models import ServiceInfo
 
 
 def _make_app() -> SiftyApp:
@@ -190,6 +192,22 @@ async def test_startup_view_populates():
         await pilot.pause()
         table = pilot.app.query_one("#startup-table", DataTable)
         assert table.row_count == 2
+
+
+async def test_services_view_populates():
+    items = [
+        ServiceInfo("DiagTrack", "Telemetry", "Diagnostics", "auto", True),
+        ServiceInfo("Fax", "Fax", "Fax service", "absent", False),
+    ]
+    async with _make_app().run_test() as pilot:
+        await pilot.app.show("services")
+        await pilot.pause()
+        view = pilot.app.query_one(ServicesView)
+        view._populate(items)
+        await pilot.pause()
+        table = pilot.app.query_one("#services-table", DataTable)
+        assert table.row_count == 2
+        assert view._highlighted() is not None
 
 
 async def test_reports_view_populates():
