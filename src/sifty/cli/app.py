@@ -14,7 +14,8 @@ from ..infra.logging import get_logger, log_file, setup_logging
 from ..windows.admin import is_admin, relaunch_as_admin
 from . import output
 from .commands import (
-    ai_group, apps, cleanup, disk, junk, organize, profile, services, startup, updates,
+    ai_group, apps, cleanup, disk, junk, organize, profile, schedule, services,
+    startup, updates,
 )
 
 app = typer.Typer(
@@ -31,6 +32,7 @@ app.add_typer(apps.app, name="apps")
 app.add_typer(startup.app, name="startup")
 app.add_typer(services.app, name="services")
 app.add_typer(profile.app, name="profile")
+app.add_typer(schedule.app, name="schedule")
 app.add_typer(updates.app, name="update")
 app.add_typer(organize.app, name="organize")
 app.add_typer(ai_group.app, name="ai")
