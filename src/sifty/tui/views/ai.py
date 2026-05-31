@@ -8,6 +8,11 @@ area outside the box until it completes.
 The model answers in Markdown, so replies are rendered through Rich's
 :class:`~rich.markdown.Markdown` — headings, bold/italic, code fences and
 tables show up formatted instead of as literal ``**asterisks**`` and backticks.
+
+Conversation memory: the full message history is kept in ``_messages`` and sent
+to Ollama each turn so the model can refer back to earlier exchanges.  The
+system prompt is built once on mount (and includes a live machine-context
+snapshot) so answers are grounded in *this* machine's state.
 """
 
 from __future__ import annotations
@@ -21,13 +26,12 @@ from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.widgets import Input, Static
 
+from ...ai import context as ai_context
 from ...ai.advisor import SYSTEM_PROMPT
 from ...ai.client import OllamaClient, OllamaUnavailable
 from .base import BaseView
 
 logger = logging.getLogger("sifty.tui")
-
-_SYSTEM = SYSTEM_PROMPT
 
 
 class AIView(BaseView):
@@ -43,8 +47,17 @@ class AIView(BaseView):
     def on_mount(self) -> None:
         self._client = OllamaClient.from_config()
         self._live: Static | None = None  # the in-progress Sifty reply widget
+        self._messages: list[dict] = []   # full conversation history (Ollama format)
+        self._system = self._build_system()
         if self.workers_enabled():
             self.check_status()
+
+    def _build_system(self) -> str:
+        """Combine the advisor system prompt with a live machine-context snapshot."""
+        ctx = ai_context.build()
+        if ctx:
+            return f"{SYSTEM_PROMPT}\n\n{ctx}"
+        return SYSTEM_PROMPT
 
     @work(thread=True, exclusive=True, group="ai-status")
     def check_status(self) -> None:
@@ -72,16 +85,20 @@ class AIView(BaseView):
         self._live = Static("[dim]thinking…[/dim]", classes="msg")
         await log.mount(self._live)
         log.scroll_end(animate=False)
-        self.ask(question)
+        # Append the user turn to history before the worker reads it.
+        self._messages.append({"role": "user", "content": question})
+        self.ask(list(self._messages))  # pass a snapshot so the worker is safe
 
     @work(thread=True, exclusive=True, group="ai-chat")
-    def ask(self, question: str) -> None:
+    def ask(self, messages: list[dict]) -> None:
         if not self._client.is_available():
             self.app.call_from_thread(self._finish, None, None)
             return
+        # Prepend the system message for this request.
+        full = [{"role": "system", "content": self._system}] + messages
         parts: list[str] = []
         try:
-            for chunk in self._client.chat_stream(_SYSTEM, question):
+            for chunk in self._client.chat_stream("", "", messages=full):
                 parts.append(chunk)
                 self.app.call_from_thread(self._stream, "".join(parts))
         except OllamaUnavailable as exc:
@@ -91,7 +108,8 @@ class AIView(BaseView):
             logger.exception("AI chat failed")
             self.app.call_from_thread(self._finish, None, str(exc))
             return
-        self.app.call_from_thread(self._finish, "".join(parts).strip(), None)
+        answer = "".join(parts).strip()
+        self.app.call_from_thread(self._finish, answer, None)
 
     def _stream(self, text: str) -> None:
         """Render the in-progress answer (as Markdown) while tokens arrive."""
@@ -110,5 +128,7 @@ class AIView(BaseView):
             self._live.update("[yellow]AI unavailable — is Ollama running?[/yellow]")
         else:
             self._live.update(Markdown(answer))
+            # Record the assistant reply so the next turn has full context.
+            self._messages.append({"role": "assistant", "content": answer})
         self._live = None
         self.query_one("#chat-log", VerticalScroll).scroll_end(animate=False)

@@ -61,28 +61,40 @@ class OllamaClient:
         except httpx.HTTPError:
             return False
 
-    def _payload(self, system: str, user: str) -> dict:
+    def _payload(self, messages: list[dict]) -> dict:
         return {
             "model": self.model,
             "stream": True,
             "keep_alive": self.keep_alive,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
+            "messages": messages,
         }
 
-    def chat_stream(self, system: str, user: str) -> Iterator[str]:
+    def _build_messages(self, system: str, user: str) -> list[dict]:
+        return [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+
+    def chat_stream(
+        self,
+        system: str,
+        user: str,
+        *,
+        messages: list[dict] | None = None,
+    ) -> Iterator[str]:
         """Stream the assistant's reply token-by-token.
 
+        Pass ``messages`` (a full Ollama-format list) to continue a conversation;
+        omit it for a single-turn exchange built from ``system`` + ``user``.
         Yields content chunks as they arrive. Raises :class:`OllamaUnavailable`
         with a human-readable message on transport errors or timeouts.
         """
+        payload_messages = messages if messages is not None else self._build_messages(system, user)
         try:
             with httpx.stream(
                 "POST",
                 f"{self.host}/api/chat",
-                json=self._payload(system, user),
+                json=self._payload(payload_messages),
                 timeout=self._timeout(),
             ) as resp:
                 resp.raise_for_status()
@@ -105,10 +117,16 @@ class OllamaClient:
         except httpx.HTTPError as exc:
             raise OllamaUnavailable(str(exc)) from exc
 
-    def chat(self, system: str, user: str) -> str:
-        """Send a single-turn chat and return the full assistant text.
+    def chat(
+        self,
+        system: str,
+        user: str,
+        *,
+        messages: list[dict] | None = None,
+    ) -> str:
+        """Send a chat and return the full assistant text.
 
-        Consumes :meth:`chat_stream` so non-streaming callers get the same
-        timeout robustness; the chunks are simply joined.
+        Pass ``messages`` to continue a multi-turn conversation; omit for a
+        single-turn exchange. Consumes :meth:`chat_stream` internally.
         """
-        return "".join(self.chat_stream(system, user)).strip()
+        return "".join(self.chat_stream(system, user, messages=messages)).strip()
