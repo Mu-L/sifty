@@ -9,6 +9,7 @@ the directory sits inside a protected root (e.g. ``C:\\Windows\\Temp``).
 from __future__ import annotations
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from ..infra.config import load_config
@@ -181,33 +182,38 @@ def _filtered_size(root: Path, file_filter) -> tuple[int, int]:
     return total, count
 
 
-def scan(config=None, only: set[str] | None = None) -> list[CategoryScan]:
-    """Measure each junk category. ``only`` filters by category key."""
-    results: list[CategoryScan] = []
-    for cat in junk_categories(config):
-        if only and cat.key not in only:
-            continue
-        total = 0
-        files = 0
-        present: list[Path] = []
-        for root in cat.roots:
-            try:
-                if not root.exists():
-                    continue
-            except OSError:
+def _measure_category(cat: JunkCategory) -> CategoryScan:
+    """Size-scan one category (pure, thread-safe)."""
+    total = 0
+    files = 0
+    present: list[Path] = []
+    for root in cat.roots:
+        try:
+            if not root.exists():
                 continue
-            present.append(root)
-            try:
-                if cat.file_filter is not None:
-                    size, count = _filtered_size(root, cat.file_filter)
-                else:
-                    size, count = _dir_size(root)
-            except OSError:
-                size, count = 0, 0
-            total += size
-            files += count
-        results.append(CategoryScan(cat, total, files, present))
-    return results
+        except OSError:
+            continue
+        present.append(root)
+        try:
+            if cat.file_filter is not None:
+                size, count = _filtered_size(root, cat.file_filter)
+            else:
+                size, count = _dir_size(root)
+        except OSError:
+            size, count = 0, 0
+        total += size
+        files += count
+    return CategoryScan(cat, total, files, present)
+
+
+def scan(config=None, only: set[str] | None = None) -> list[CategoryScan]:
+    """Measure each junk category concurrently. ``only`` filters by key."""
+    cats = [c for c in junk_categories(config) if not only or c.key in only]
+    if not cats:
+        return []
+    workers = min(len(cats), 8, os.cpu_count() or 1)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(_measure_category, cats))
 
 
 def _downloads_installer_filter(path: Path) -> bool:

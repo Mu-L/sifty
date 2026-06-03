@@ -9,6 +9,11 @@ from ...console import confirm, console, error, human_size, success, warn
 from ...core import apps
 from .. import output
 
+
+class _null:
+    def __enter__(self): return self
+    def __exit__(self, *_): return False
+
 app = typer.Typer(help="List, inspect, and remove installed apps and startup items.")
 
 
@@ -59,6 +64,39 @@ def startup_cmd() -> None:
     for e in entries:
         table.add_row(e.name, e.location, e.command)
     console.print(table)
+
+
+@app.command("orphans")
+def orphans_cmd() -> None:
+    """Report orphaned uninstall entries whose executable no longer exists."""
+    from ...core.registry_scan import find_orphan_uninstall_entries
+
+    with console.status("Scanning uninstall registry keys…") if not output.json_enabled() else _null():
+        entries = find_orphan_uninstall_entries()
+
+    if output.json_enabled():
+        output.emit([
+            {"display_name": e.display_name, "reason": e.reason,
+             "uninstall_string": e.uninstall_string, "key_path": e.key_path}
+            for e in entries
+        ])
+        return
+
+    if not entries:
+        success("No orphaned uninstall entries found.")
+        return
+
+    table = Table(title=f"Orphaned uninstall entries ({len(entries)})")
+    table.add_column("Application")
+    table.add_column("Reason", style="dim")
+    table.add_column("Key (hive)", style="dim")
+    for e in entries:
+        table.add_row(e.display_name, e.reason, e.hive)
+    console.print(table)
+    console.print(
+        f"\n[dim]{len(entries)} entry/entries with broken uninstallers. "
+        "These can be removed manually via regedit or a registry cleaner.[/dim]"
+    )
 
 
 @app.command("uninstall")

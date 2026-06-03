@@ -195,6 +195,22 @@ def _handler_toggle_startup(args: dict) -> ToolResult:
     )
 
 
+def _handler_find_orphan_apps(_args: dict) -> ToolResult:
+    from ..core.registry_scan import find_orphan_uninstall_entries
+    entries = find_orphan_uninstall_entries()
+    if not entries:
+        return ToolResult(summary="No orphaned uninstall entries found — the registry looks clean.")
+    rows = [[e.display_name, e.reason, e.hive] for e in entries]
+    return ToolResult(
+        summary=f"Found {len(entries)} orphaned uninstall entries with broken or missing uninstallers. "
+                f"Full list shown to the user as a table. These are read-only findings; "
+                f"removal must be done manually via regedit or a registry cleaner.",
+        title="Orphaned uninstall entries",
+        columns=["Application", "Reason", "Hive"],
+        rows=rows,
+    )
+
+
 def _handler_scan_artifacts(args: dict) -> ToolResult:
     from ..core.purge import scan_artifacts
     raw = args.get("path", "")
@@ -407,6 +423,13 @@ TOOLS: list[Tool] = [
         parameters={"type": "object", "properties": {}, "required": []},
         risk="read",
         handler=_handler_system_status,
+    ),
+    Tool(
+        name="find_orphan_apps",
+        description="Scan the Windows registry for orphaned uninstall entries whose executable no longer exists on disk.",
+        parameters={"type": "object", "properties": {}, "required": []},
+        risk="read",
+        handler=_handler_find_orphan_apps,
     ),
     Tool(
         name="scan_project_artifacts",

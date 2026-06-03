@@ -34,3 +34,27 @@ def test_find_duplicates_respects_min_size(tmp_path):
     (tmp_path / "a.txt").write_text("hi")
     (tmp_path / "b.txt").write_text("hi")
     assert disk.find_duplicates(tmp_path, min_size=100) == {}
+
+
+def test_find_duplicates_hardlinks_not_counted_as_wasted(tmp_path):
+    """NTFS hardlinks share the same inode — they are NOT duplicate space."""
+    original = tmp_path / "original.bin"
+    original.write_bytes(b"x" * 1000)
+    link = tmp_path / "hardlink.bin"
+    link.hardlink_to(original)
+
+    groups = disk.find_duplicates(tmp_path, min_size=1, count_hardlinks_once=True)
+    # The two paths share st_ino so only one is kept — no duplicate group formed.
+    assert len(groups) == 0
+
+
+def test_find_duplicates_hardlinks_opt_out(tmp_path):
+    """count_hardlinks_once=False: hardlinks are treated as duplicate content."""
+    original = tmp_path / "original.bin"
+    original.write_bytes(b"x" * 1000)
+    link = tmp_path / "hardlink.bin"
+    link.hardlink_to(original)
+
+    groups = disk.find_duplicates(tmp_path, min_size=1, count_hardlinks_once=False)
+    # Both paths included → same hash → reported as duplicates
+    assert len(groups) == 1

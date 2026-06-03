@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import psutil
@@ -12,6 +13,8 @@ import psutil
 from .models import VolumeUsage
 
 __all__ = ["VolumeUsage", "volumes", "biggest", "find_duplicates"]
+
+_MAX_HASH_WORKERS = min(8, os.cpu_count() or 1)
 
 
 def volumes() -> list[VolumeUsage]:
@@ -56,27 +59,50 @@ def biggest(path: Path, top: int = 15) -> list[tuple[Path, int]]:
     return items[:top]
 
 
-def find_duplicates(path: Path, min_size: int = 1) -> dict[str, list[Path]]:
-    """Find duplicate files under ``path`` by size, then content hash."""
+def find_duplicates(
+    path: Path,
+    min_size: int = 1,
+    count_hardlinks_once: bool = True,
+) -> dict[str, list[Path]]:
+    """Find duplicate files under ``path`` by size, then content hash.
+
+    With ``count_hardlinks_once=True`` (default) NTFS hardlinks that share
+    the same inode are represented by a single path so they are never
+    reported as wasted space — they occupy the same disk block.
+    Hashing of size-matched candidates is parallelised with a thread pool.
+    """
     by_size: dict[int, list[Path]] = defaultdict(list)
+    seen_inodes: set[tuple[int, int]] = set()
+
     for root, _dirs, files in os.walk(path, onerror=lambda _e: None):
         for name in files:
             fp = Path(root) / name
             try:
-                size = fp.stat(follow_symlinks=False).st_size
+                st = fp.stat(follow_symlinks=False)
             except OSError:
                 continue
-            if size >= min_size:
-                by_size[size].append(fp)
+            if st.st_size < min_size:
+                continue
+            if count_hardlinks_once:
+                inode_key = (st.st_dev, st.st_ino)
+                if inode_key in seen_inodes:
+                    continue  # hardlink to an already-seen file — skip
+                seen_inodes.add(inode_key)
+            by_size[st.st_size].append(fp)
+
+    # Collect all files from size groups that could be duplicates.
+    candidates = [fp for paths in by_size.values() if len(paths) >= 2 for fp in paths]
+    if not candidates:
+        return {}
+
+    # Hash candidates in parallel — I/O-bound, threads are the right tool.
+    with ThreadPoolExecutor(max_workers=_MAX_HASH_WORKERS) as pool:
+        hashes = list(pool.map(_hash_file, candidates))
 
     dupes: dict[str, list[Path]] = defaultdict(list)
-    for size, paths in by_size.items():
-        if len(paths) < 2:
-            continue  # unique size → cannot be a duplicate
-        for fp in paths:
-            digest = _hash_file(fp)
-            if digest:
-                dupes[digest].append(fp)
+    for fp, digest in zip(candidates, hashes):
+        if digest:
+            dupes[digest].append(fp)
     return {d: ps for d, ps in dupes.items() if len(ps) > 1}
 
 
