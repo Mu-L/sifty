@@ -33,6 +33,7 @@ _SKIP_PREFIXES = (
     "wusa.exe",
     "%systemroot%",
     "%windir%",
+    "winget",          # winget-managed entries use "winget uninstall ..."
 )
 
 
@@ -80,6 +81,15 @@ def find_orphan_uninstall_entries() -> list[OrphanEntry]:
             display_name = values.get("DisplayName", "").strip()
             if not display_name:
                 continue  # no display name → internal/component entry, skip
+
+            # SystemComponent=1 means "hide from Add/Remove Programs" — internal
+            # driver components (NVIDIA, etc.) use this; skip them.
+            if values.get("SystemComponent", "0") == "1":
+                continue
+
+            # NoRemove=1 means the entry is intentionally not removable.
+            if values.get("NoRemove", "0") == "1":
+                continue
 
             dedup = display_name.lower()
             if dedup in seen:
