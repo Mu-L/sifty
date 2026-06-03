@@ -12,7 +12,9 @@ from textual.widgets import Button, DataTable, Input, Static
 
 from ...console import human_size
 from ...core import apps as apps_mod
+from ...core.registry_scan import find_orphan_uninstall_entries
 from ..modals import ConfirmModal
+from ..widgets import Panel
 from .base import BaseView
 
 logger = logging.getLogger("sifty.tui")
@@ -35,9 +37,11 @@ class AppsView(BaseView):
         yield DataTable(id="apps-table")
         with Horizontal(classes="actions"):
             yield Button("Refresh", id="refresh")
+            yield Button("Scan orphans", id="scan-orphans")
             yield Button("Clear marks", id="clear-marks")
             yield Button("Uninstall selected", id="uninstall", variant="warning")
         yield Static("", id="apps-status", classes="status")
+        yield Panel(DataTable(id="orphans-table"), title="Orphaned registry entries", id="orphans-panel")
 
     def on_mount(self) -> None:
         self._apps: list = []
@@ -48,6 +52,12 @@ class AppsView(BaseView):
         table = self.query_one("#apps-table", DataTable)
         table.cursor_type = "row"
         self._cols = table.add_columns("", "Name", "Version", "Publisher", "Size")
+
+        orphans_table = self.query_one("#orphans-table", DataTable)
+        orphans_table.cursor_type = "none"
+        orphans_table.add_columns("Application", "Reason", "Hive")
+        self.query_one("#orphans-panel").display = False
+
         if self.workers_enabled():
             self.load()
 
@@ -164,11 +174,39 @@ class AppsView(BaseView):
         if event.button.id == "refresh":
             self._status("Refreshing…")
             self.load()
+        elif event.button.id == "scan-orphans":
+            self._status("Scanning registry for orphaned entries…")
+            self.query_one("#orphans-panel").display = False
+            self.load_orphans()
         elif event.button.id == "clear-marks":
             self._marked.clear()
             self._rebuild_table()
         elif event.button.id == "uninstall":
             self._uninstall_flow()  # launches the worker below
+
+    # --------------------------------------------------------------- orphans
+    @work(thread=True, exclusive=True, group="apps-orphans")
+    def load_orphans(self) -> None:
+        try:
+            entries = find_orphan_uninstall_entries()
+        except Exception as exc:
+            logger.exception("Orphan scan failed")
+            self.app.call_from_thread(self._status, f"Orphan scan failed: {exc}")
+            return
+        self.app.call_from_thread(self._populate_orphans, entries)
+
+    def _populate_orphans(self, entries) -> None:
+        panel = self.query_one("#orphans-panel")
+        table = self.query_one("#orphans-table", DataTable)
+        table.clear()
+        if not entries:
+            self._status("No orphaned registry entries found.")
+            panel.display = False
+            return
+        for e in entries:
+            table.add_row(e.display_name, e.reason, e.hive)
+        panel.display = True
+        self._status(f"{len(entries)} orphaned entr{'y' if len(entries) == 1 else 'ies'} found (read-only report).")
 
     # --------------------------------------------------------------- uninstall
     @work
