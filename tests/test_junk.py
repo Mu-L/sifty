@@ -57,6 +57,44 @@ def test_clean_apply_trashes_entries(monkeypatch, sandbox_temp):
     assert not result.skipped
 
 
+def test_browser_cache_covers_all_profiles_and_firefox(monkeypatch, tmp_path):
+    local = tmp_path / "local"
+    chrome = local / "Google" / "Chrome" / "User Data"
+    for profile in ("Default", "Profile 1"):
+        (chrome / profile / "Cache").mkdir(parents=True)
+        (chrome / profile / "Code Cache").mkdir(parents=True)
+    (local / "Mozilla" / "Firefox" / "Profiles" / "abc.dev-edition" / "cache2").mkdir(parents=True)
+    # A non-profile dir that must NOT be swept (would hit cookies/bookmarks).
+    (chrome / "System Profile" / "Cache").mkdir(parents=True)
+
+    monkeypatch.setenv("LOCALAPPDATA", str(local))
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "win"))
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
+
+    cats = {c.key: c for c in junk.junk_categories(Config())}
+    roots = {str(r) for r in cats["browser-cache"].roots}
+    assert str(chrome / "Default" / "Cache") in roots
+    assert str(chrome / "Profile 1" / "Cache") in roots
+    assert str(chrome / "Default" / "Code Cache") in roots
+    assert any("cache2" in r for r in roots)               # Firefox covered
+    assert str(chrome / "System Profile" / "Cache") not in roots
+
+
+def test_crash_dump_categories_present(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "win"))
+    monkeypatch.setenv("ProgramData", str(tmp_path / "progdata"))
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "home"))
+
+    cats = {c.key: c for c in junk.junk_categories(Config())}
+    assert "crash-dumps" in cats and not cats["crash-dumps"].requires_admin
+    assert "system-crash-reports" in cats and cats["system-crash-reports"].requires_admin
+    crash_roots = {r.name for r in cats["crash-dumps"].roots}
+    assert {"CrashDumps", "ReportQueue", "ReportArchive"} <= crash_roots
+    sys_roots = {r.name for r in cats["system-crash-reports"].roots}
+    assert "Minidump" in sys_roots
+
+
 def test_downloads_installers_gated_by_config(monkeypatch, tmp_path):
     cfg_off = Config()
     keys_off = {c.key for c in junk.junk_categories(cfg_off)}

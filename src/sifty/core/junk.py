@@ -29,6 +29,50 @@ def _local_appdata() -> Path | None:
     return _env_path("LOCALAPPDATA")
 
 
+def _browser_cache_roots(local: Path) -> list[Path]:
+    """Cache directories across ALL profiles of the installed browsers.
+
+    Chromium-family browsers keep one cache per profile under ``User Data``
+    (Default, Profile 1, …); Firefox keeps ``cache2`` per profile. Only cache
+    dirs are returned — never cookies, history, or passwords.
+    """
+    roots: list[Path] = []
+
+    chromium_user_data = [
+        local / "Google" / "Chrome" / "User Data",
+        local / "Microsoft" / "Edge" / "User Data",
+        local / "BraveSoftware" / "Brave-Browser" / "User Data",
+        local / "Vivaldi" / "User Data",
+    ]
+    for user_data in chromium_user_data:
+        if not user_data.is_dir():
+            continue
+        try:
+            profiles = [
+                p for p in user_data.iterdir()
+                if p.is_dir() and (p.name == "Default" or p.name.startswith("Profile"))
+            ]
+        except OSError:
+            continue
+        for profile in profiles:
+            for sub in ("Cache", "Code Cache", "GPUCache"):
+                cand = profile / sub
+                if cand.is_dir():
+                    roots.append(cand)
+
+    firefox_profiles = local / "Mozilla" / "Firefox" / "Profiles"
+    if firefox_profiles.is_dir():
+        try:
+            for profile in firefox_profiles.iterdir():
+                cand = profile / "cache2"
+                if cand.is_dir():
+                    roots.append(cand)
+        except OSError:
+            pass
+
+    return roots
+
+
 def junk_categories(config=None) -> list[JunkCategory]:
     """Build the list of junk categories from the environment + config."""
     config = config or load_config()
@@ -61,12 +105,12 @@ def junk_categories(config=None) -> list[JunkCategory]:
                 "Explorer thumbnail/icon cache (rebuilt automatically).", [thumb],
             )
         )
-        chrome = local / "Google" / "Chrome" / "User Data" / "Default" / "Cache"
-        edge = local / "Microsoft" / "Edge" / "User Data" / "Default" / "Cache"
         cats.append(
             JunkCategory(
                 "browser-cache", "Browser caches",
-                "Chrome/Edge on-disk caches.", [chrome, edge],
+                "On-disk caches for every Chrome/Edge/Brave/Vivaldi profile and "
+                "Firefox (never cookies, history, or passwords).",
+                _browser_cache_roots(local),
             )
         )
 
@@ -147,6 +191,34 @@ def junk_categories(config=None) -> list[JunkCategory]:
                 "OneDrive diagnostic logs (rebuilt automatically).", [od_logs],
             )
         )
+
+    if local:
+        cats.append(
+            JunkCategory(
+                "crash-dumps", "App crash dumps",
+                "Per-user crash dumps and error reports (CrashDumps, WER).",
+                [
+                    local / "CrashDumps",
+                    local / "Microsoft" / "Windows" / "WER" / "ReportQueue",
+                    local / "Microsoft" / "Windows" / "WER" / "ReportArchive",
+                ],
+            )
+        )
+
+    sysroot = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+    progdata = Path(os.environ.get("ProgramData", r"C:\ProgramData"))
+    cats.append(
+        JunkCategory(
+            "system-crash-reports", "System crash reports",
+            "System-wide crash reports and kernel minidumps (WER, Minidump).",
+            [
+                progdata / "Microsoft" / "Windows" / "WER" / "ReportQueue",
+                progdata / "Microsoft" / "Windows" / "WER" / "ReportArchive",
+                sysroot / "Minidump",
+            ],
+            requires_admin=True,
+        )
+    )
 
     return cats
 
