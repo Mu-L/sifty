@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sifty · sift the junk from the keep</title>
-  <meta name="description" content="An open source Windows maintenance CLI and TUI. Cleans junk, finds duplicates, manages apps and updates, purges dev clutter. Dry-run by default, Recycle Bin only, with undo.">
+  <title>Sifty - sift the junk from the keep</title>
+  <meta name="description" content="An open source Windows maintenance CLI and TUI that cleans junk, finds duplicates, manages apps and updates, and purges dev clutter. Dry-run by default, Recycle Bin only, with undo.">
   <link rel="canonical" href="https://vortrix5.github.io/sifty/">
   <link rel="icon" type="image/png" href="assets/logo.png">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Sifty · sift the junk from the keep">
-  <meta property="og:description" content="Open source Windows cleanup in your terminal. Dry-run by default, Recycle Bin only, undo included. Optional AI that runs locally and never touches your files.">
+  <meta property="og:title" content="Sifty - sift the junk from the keep">
+  <meta property="og:description" content="Open source Windows cleanup in your terminal. Dry-run by default, deletes only to the Recycle Bin, and every clean can be undone. The optional AI runs locally and never touches your files.">
   <meta property="og:url" content="https://vortrix5.github.io/sifty/">
   <meta property="og:image" content="https://vortrix5.github.io/sifty/assets/social-preview.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -37,15 +37,16 @@
 
 <main id="top">
 
-  <!-- ====================== HERO ====================== -->
+  <!-- Hero -->
   <section class="hero">
     <div class="hero-copy">
       <h1 class="wordmark">sifty<span class="caret" aria-hidden="true"></span></h1>
       <p class="tagline">sift the junk from the keep</p>
       <p class="lede">
-        Open source Windows cleanup that lives in your terminal.
-        Junk, duplicates, apps, updates, dev clutter.
-        Previews first. Recycle Bin always. Undo built in.
+        An open source cleanup tool for Windows that lives in your terminal.
+        It finds junk files, duplicates, leftover apps and dev clutter, previews
+        everything before touching it, and only ever deletes to the Recycle Bin,
+        so a clean can always be undone.
       </p>
       <div class="install-pill">
         <code>pipx install sifty</code>
@@ -55,7 +56,7 @@
         <a class="btn btn-primary" href="https://github.com/Vortrix5/sifty/releases/latest" rel="noopener">Download sifty.exe</a>
         <a class="btn btn-ghost" href="https://github.com/Vortrix5/sifty" rel="noopener">Star on GitHub</a>
       </div>
-      <p class="hero-fine">Windows 10/11 · Python 3.11+ or standalone exe · MIT</p>
+      <p class="hero-fine">Works on Windows 10 and 11 with Python 3.11+, or grab the standalone exe. MIT licensed.</p>
     </div>
 
     <div class="hero-term">
@@ -100,41 +101,41 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
     </div>
   </section>
 
-  <!-- ====================== FEATURES ====================== -->
+  <!-- Features -->
   <section id="features" class="section reveal">
     <h2>what it sifts</h2>
     <div class="grid grid-3">
       <article class="card">
         <h3 class="card-cmd">$ sifty checkup</h3>
-        <p>One read-only scan of everything. Nothing gets touched.</p>
+        <p>One read-only scan across everything, without touching a single file.</p>
       </article>
       <article class="card">
         <h3 class="card-cmd">$ sifty junk</h3>
-        <p>Temp files, browser caches, crash dumps. 11+ categories.</p>
+        <p>Clears temp files, browser caches, crash dumps and more than ten other categories.</p>
       </article>
       <article class="card">
         <h3 class="card-cmd">$ sifty disk</h3>
-        <p>Volume gauges, biggest files, NTFS-aware duplicate finder.</p>
+        <p>Shows how full each volume is, lists your biggest files and runs an NTFS-aware duplicate scan.</p>
       </article>
       <article class="card">
         <h3 class="card-cmd">$ sifty apps</h3>
-        <p>Uninstall via winget, then catch what the uninstaller forgot.</p>
+        <p>Uninstalls through winget, then sweeps up whatever the uninstaller forgot.</p>
       </article>
       <article class="card">
         <h3 class="card-cmd">$ sifty purge</h3>
-        <p>node_modules, __pycache__, orphaned worktrees, WSL2 disks.</p>
+        <p>Reclaims space from node_modules, __pycache__, orphaned worktrees and WSL2 disks.</p>
       </article>
       <article class="card">
         <h3 class="card-cmd">$ sifty startup</h3>
-        <p>Boot bloat and safe-to-disable services. All reversible.</p>
+        <p>Trims boot bloat and safe-to-disable services, and everything can be turned back on.</p>
       </article>
     </div>
   </section>
 
-  <!-- ====================== DEMO TABS ====================== -->
+  <!-- Demo tabs -->
   <section id="demo" class="section reveal">
     <h2>see it run</h2>
-    <p class="section-sub">Straight from the terminal. Pick a tab.</p>
+    <p class="section-sub">Real output, straight from the terminal.</p>
 
     <div class="tabs" role="tablist" aria-label="Command demos">
       <button class="tab is-active" role="tab" aria-selected="true" data-tab="disk">Disk</button>
@@ -194,7 +195,7 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
     </div>
   </section>
 
-  <!-- ====================== SAFETY ====================== -->
+  <!-- Safety -->
   <section id="safety" class="section reveal">
     <h2>hard to misuse, on purpose</h2>
     <p class="section-sub">Most cleaners ask for your trust. Sifty is built so it doesn't need much.</p>
@@ -207,17 +208,17 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
       <article class="card card-num">
         <span class="num">02</span>
         <h3>Recycle Bin, always</h3>
-        <p>Permanent delete is not a code path. <code>sifty undo</code> restores.</p>
+        <p>Permanent delete is not a code path, and <code>sifty undo</code> brings things back.</p>
       </article>
       <article class="card card-num">
         <span class="num">03</span>
         <h3>Protected paths</h3>
-        <p>Windows, Program Files, your profile root. Refused. No override exists.</p>
+        <p>Windows, Program Files and your profile root are refused outright. No override exists.</p>
       </article>
       <article class="card card-num">
         <span class="num">04</span>
         <h3>Audit log</h3>
-        <p>Every applied deletion is logged with a timestamp. Receipts.</p>
+        <p>Every applied deletion is logged with a timestamp, so you always have receipts.</p>
       </article>
     </div>
 
@@ -241,7 +242,7 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
     </div>
   </section>
 
-  <!-- ====================== TUI ====================== -->
+  <!-- TUI -->
   <section id="tui" class="section reveal">
     <h2>prefer buttons? sifty tui</h2>
     <p class="section-sub">The same engine, full screen.</p>
@@ -257,32 +258,32 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
         <li>Seven screens: Home, Clean, Disk, Apps, Monitor, Reports, AI</li>
         <li><kbd>Ctrl+P</kbd> palette, <kbd>F2</kbd> to elevate, <kbd>Space</kbd> to bulk-select</li>
         <li>Checkup findings come with one-button fixes</li>
-        <li>Reports tracks space reclaimed, undo included</li>
+        <li>The Reports screen tracks reclaimed space and includes undo</li>
       </ul>
     </div>
   </section>
 
-  <!-- ====================== AI ====================== -->
+  <!-- AI -->
   <section id="ai" class="section reveal">
     <h2>ai that can look, not touch</h2>
-    <p class="section-sub">Optional, and unusually boring about your privacy.</p>
+    <p class="section-sub">Entirely optional, and deliberately limited in what it can see and do.</p>
     <div class="ai-row">
       <div>
         <h3>Runs on your machine</h3>
-        <p><a href="https://ollama.com" rel="noopener">Ollama</a> over local HTTP. Nothing leaves your computer.</p>
+        <p>Talks to <a href="https://ollama.com" rel="noopener">Ollama</a> over local HTTP, so nothing ever leaves your computer.</p>
       </div>
       <div>
         <h3>Sees metadata only</h3>
-        <p>Names, sizes and paths. Never file contents.</p>
+        <p>It gets names, sizes and paths, never the contents of your files.</p>
       </div>
       <div>
         <h3>Can't delete anything</h3>
-        <p>It proposes. You click Run or Skip.</p>
+        <p>It can suggest a cleanup, but you decide whether to run or skip it.</p>
       </div>
     </div>
   </section>
 
-  <!-- ====================== INSTALL ====================== -->
+  <!-- Install -->
   <section id="install" class="section reveal">
     <h2>get sifty</h2>
     <div class="grid grid-2 install-grid">
@@ -294,7 +295,7 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
       <article class="card install-card">
         <h3>Standalone exe</h3>
         <div class="cmd-line"><a class="btn btn-primary btn-small" href="https://github.com/Vortrix5/sifty/releases/latest" rel="noopener">Download sifty.exe</a></div>
-        <p>No Python needed. One file from the latest release.</p>
+        <p>A single file from the latest release, no Python needed.</p>
       </article>
       <article class="card install-card">
         <h3>Scoop</h3>
@@ -305,10 +306,10 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
       <article class="card install-card">
         <h3>winget</h3>
         <div class="cmd-line"><code>winget install Vortrix5.Sifty</code><button class="copy-btn" data-copy="winget install Vortrix5.Sifty" aria-label="Copy winget command">copy</button></div>
-        <p>Fresh submission, may still be rolling out.</p>
+        <p>Recently submitted, so it may still be rolling out.</p>
       </article>
     </div>
-    <p class="section-foot">First run: <code>sifty doctor</code>, then <code>sifty checkup</code>. Both read-only.</p>
+    <p class="section-foot">On first run, try <code>sifty doctor</code> and then <code>sifty checkup</code>. Both are read-only.</p>
   </section>
 
 </main>
@@ -317,7 +318,7 @@ Move 27,803 items (1.8 GB) to the Recycle Bin? [y/N]: y
   <div class="footer-inner">
     <div class="footer-brand">
       <img src="assets/logo.png" alt="" width="22" height="22">
-      <span>sifty · MIT licensed · © 2026 Amine Zouaoui</span>
+      <span>© 2026 Amine Zouaoui. MIT licensed.</span>
     </div>
     <nav class="footer-links" aria-label="Project links">
       <a href="https://github.com/Vortrix5/sifty" rel="noopener">GitHub</a>
