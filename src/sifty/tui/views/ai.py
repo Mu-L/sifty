@@ -61,6 +61,21 @@ _QUICK_ACTIONS = {
 
 _RISK_COLOR = {"read": "cyan", "low": "yellow", "high": "red"}
 
+# Read-only tool -> a deterministic follow-up action rendered as a button under
+# the result (label, nav key). Deliberately NOT model-generated: a small local
+# model can't reliably emit action schemas, and the mapped screens already
+# guard every destructive step behind preview + confirm.
+_TOOL_ACTIONS: dict[str, tuple[str, str]] = {
+    "scan_junk": ("Clean junk…", "junk"),
+    "analyze_disk": ("Open Disk…", "disk"),
+    "find_duplicates": ("Review duplicates…", "cleanup"),
+    "list_apps": ("Open Apps…", "apps"),
+    "list_updates": ("Review updates…", "updates"),
+    "find_orphan_apps": ("Review orphans…", "apps"),
+    "scan_project_artifacts": ("Purge artifacts…", "purge"),
+    "system_status": ("Open Monitor…", "monitor"),
+}
+
 
 class AIView(BaseView):
     def compose(self) -> ComposeResult:
@@ -125,10 +140,14 @@ class AIView(BaseView):
         self.query_one("#ask", Input).value = ""
         self._submit(event.value)
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         action = _QUICK_ACTIONS.get(event.button.id or "")
         if action:
             self._submit(action[1])
+            return
+        nav_key = getattr(event.button, "_nav_key", None)
+        if nav_key:  # a tool-result follow-up action — jump to the screen
+            await self.app.show(nav_key)
 
     def _submit(self, question: str) -> None:
         question = question.strip()
@@ -254,7 +273,20 @@ class AIView(BaseView):
             log.mount(Static(self._build_table(event.table), classes="msg-table"))
         else:
             log.mount(Static(f"[green]✓[/green] [dim]{escape(event.result)}[/dim]", classes="msg-tool"))
+        self._mount_follow_up(event)
         log.scroll_end(animate=False)
+
+    def _mount_follow_up(self, event: ToolResultEvent) -> None:
+        """Offer a one-tap action button when a read-only scan found something."""
+        if event.skipped or event.table is None or not event.table.rows:
+            return
+        action = _TOOL_ACTIONS.get(event.tool_name)
+        if action is None:
+            return
+        label, nav_key = action
+        button = Button(label, classes="ai-action")
+        button._nav_key = nav_key
+        self._log().mount(button)
 
     def _build_table(self, tr) -> Table:
         table = Table(title=tr.title or None, title_style="bold", expand=False, pad_edge=False)

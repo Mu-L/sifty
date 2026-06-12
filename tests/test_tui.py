@@ -419,6 +419,60 @@ async def test_ai_view_replays_stored_conversation():
         assert len(pilot.app.query("#chat-log Static")) >= 2
 
 
+async def test_ai_tool_result_offers_follow_up_action():
+    from sifty.ai.agent import ToolResultEvent
+    from sifty.ai.tools import ToolResult
+
+    table = ToolResult("found junk", title="Junk", columns=["Category", "Size"],
+                       rows=[["user-temp", "600 B"]])
+    async with _make_app().run_test() as pilot:
+        await pilot.app.show("ai")
+        await pilot.pause()
+        view = pilot.app.query_one(AIView)
+        view._show_tool_result(ToolResultEvent("scan_junk", "found junk", table=table))
+        await pilot.pause()
+        buttons = pilot.app.query(".ai-action")
+        assert len(buttons) == 1
+        assert buttons[0]._nav_key == "junk"
+
+
+async def test_ai_tool_result_no_action_when_empty_or_unmapped():
+    from sifty.ai.agent import ToolResultEvent
+    from sifty.ai.tools import ToolResult
+
+    async with _make_app().run_test() as pilot:
+        await pilot.app.show("ai")
+        await pilot.pause()
+        view = pilot.app.query_one(AIView)
+        # Empty result table → nothing to act on.
+        view._show_tool_result(ToolResultEvent(
+            "scan_junk", "no junk", table=ToolResult("no junk", rows=[])
+        ))
+        # A destructive tool isn't in the follow-up map.
+        view._show_tool_result(ToolResultEvent(
+            "clean_junk", "cleaned", table=ToolResult("cleaned", rows=[["x"]])
+        ))
+        await pilot.pause()
+        assert len(pilot.app.query(".ai-action")) == 0
+
+
+async def test_ai_follow_up_button_navigates():
+    from sifty.ai.agent import ToolResultEvent
+    from sifty.ai.tools import ToolResult
+
+    table = ToolResult("found junk", rows=[["user-temp", "600 B"]])
+    async with _make_app().run_test() as pilot:
+        await pilot.app.show("ai")
+        await pilot.pause()
+        view = pilot.app.query_one(AIView)
+        view._show_tool_result(ToolResultEvent("scan_junk", "found junk", table=table))
+        await pilot.pause()
+        await pilot.click(".ai-action")
+        await pilot.pause()
+        await pilot.pause()
+        assert pilot.app.query(JunkView)  # deep-linked into Clean → Junk
+
+
 async def test_disk_view_shows_biggest_items():
     async with _make_app().run_test() as pilot:
         await pilot.app.show("disk")

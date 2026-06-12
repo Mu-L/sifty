@@ -200,6 +200,7 @@ Tree {
 }
 
 #chat-log .msg-user { height: auto; margin-bottom: 1; }
+#chat-log .ai-action { margin: 0 0 1 2; }
 #chat-log .msg-thinking { height: auto; color: $secondary; }
 #chat-log .msg-tool { height: auto; color: $secondary; margin-bottom: 1; }
 #chat-log .msg-table { height: auto; margin-bottom: 1; }
