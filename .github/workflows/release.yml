@@ -28,6 +28,8 @@ jobs:
           python -m build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true   # don't fail a re-run if the version is already up
 
   windows-exe:
     name: Build Windows exe
@@ -45,7 +47,7 @@ jobs:
         run: >
           pyinstaller --onefile --name sifty --paths src --console
           --collect-submodules win32com --hidden-import win32timezone
-          src/sifty/__main__.py
+          packaging/exe_entry.py
       - name: Smoke-test the exe
         run: ./dist/sifty.exe version
       - name: Attach exe to the release
