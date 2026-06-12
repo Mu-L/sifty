@@ -2,14 +2,18 @@
   <img src="docs/logo.png" alt="Sifty" width="160">
 </p>
 
-# Sifty
+<h1 align="center">Sifty</h1>
 
-> An AI-assisted Windows maintenance CLI + TUI that **sifts the junk from the keep**.
+<p align="center">
+  <em>An AI-assisted Windows maintenance CLI + TUI that <b>sifts the junk from the keep</b>.</em>
+</p>
 
-![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
-![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![CI](https://github.com/Vortrix5/sifty/actions/workflows/ci.yml/badge.svg)
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078d4" alt="Windows">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT">
+  <img src="https://github.com/Vortrix5/sifty/actions/workflows/ci.yml/badge.svg" alt="CI">
+</p>
 
 Clean junk, analyze disks, find duplicates, manage apps and startup programs,
 apply updates, prune dev artifacts and git worktrees, and organize files — from
