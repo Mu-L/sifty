@@ -2,17 +2,7 @@
      icon) by relative path; re-render to docs/social-preview.png with headless
      Chrome screenshotting this file at a 1280x640 window. -->
 <svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sifty — sift the junk from the keep">
-  <defs>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#80d97a" stop-opacity="0.22"/>
-      <stop offset="100%" stop-color="#80d97a" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-
   <rect x="0" y="0" width="1280" height="640" fill="#152A4D"/>
-
-  <!-- green spotlight behind the icon -->
-  <circle cx="370" cy="300" r="270" fill="url(#glow)"/>
 
   <!-- icon (transparent, floats on the banner — content bbox sized to sit at ~370,320) -->
   <image href="logo-no-bg.png" x="155" y="119" width="428" height="428"/>
