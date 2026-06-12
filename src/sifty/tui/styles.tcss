@@ -117,6 +117,35 @@ Screen {
     margin: 0 1 1 0;
 }
 
+/* Home: stat cards are clickable (deep-link to their screen). */
+.stat-card {
+    border-subtitle-color: $text-muted;
+}
+
+.stat-card:hover {
+    border: round $accent;
+    border-title-color: $accent;
+}
+
+/* Home: checkup findings list. */
+#checkup-results {
+    height: auto;
+}
+
+.finding-row {
+    height: auto;
+    margin-top: 1;
+}
+
+.finding-text {
+    width: 1fr;
+    padding: 1 1 0 0;
+}
+
+.finding-row .fix {
+    min-width: 16;
+}
+
 .actions {
     height: auto;
     padding-top: 1;

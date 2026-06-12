@@ -74,6 +74,63 @@ async def test_home_has_individual_stat_blocks():
             assert block.region.height > 0  # actually rendered (not collapsed)
 
 
+async def test_home_checkup_renders_findings_with_action_buttons():
+    from sifty.core.checkup import Finding
+
+    findings = [
+        Finding("junk", "Junk files", "1.2 GB reclaimable", "attention", "junk", "Clean junk"),
+        Finding("disk", "Disk space", "all volumes have headroom", "ok", "", ""),
+    ]
+    async with _make_app().run_test() as pilot:
+        await pilot.pause()
+        view = pilot.app.query_one(HomeView)
+        await view._show_findings(findings)
+        await pilot.pause()
+        # One action button for the actionable finding, none for the ok one.
+        fix_buttons = pilot.app.query(".fix")
+        assert len(fix_buttons) == 1
+        assert fix_buttons[0].id == "fix-junk"
+
+
+async def test_home_checkup_action_button_deep_links():
+    from sifty.core.checkup import Finding
+
+    async with _make_app().run_test() as pilot:
+        await pilot.pause()
+        view = pilot.app.query_one(HomeView)
+        await view._show_findings(
+            [Finding("junk", "Junk files", "600 B reclaimable", "info", "junk", "Clean junk")]
+        )
+        await pilot.pause()
+        await pilot.click("#fix-junk")
+        await pilot.pause()
+        await pilot.pause()
+        assert pilot.app.query(JunkView)  # navigated into the Clean group's Junk tab
+
+
+async def test_home_stat_cards_are_clickable():
+    from sifty.tui.views.home import StatCard
+
+    async with _make_app().run_test() as pilot:
+        await pilot.pause()
+        cards = pilot.app.query(StatCard)
+        assert len(cards) == 6
+        nav_keys = {c._nav_key for c in cards}
+        assert nav_keys == {"junk", "updates", "apps", "startup", "services", "reports"}
+
+
+async def test_home_stats_use_cache_on_remount():
+    import time as _time
+
+    async with _make_app().run_test() as pilot:
+        await pilot.pause()
+        pilot.app._home_cache = {"junk-summary": ("[b]42 B[/b] reclaimable", _time.monotonic())}
+        await pilot.app.show("home")  # remount
+        await pilot.pause()
+        block = pilot.app.screen.query_one("#junk-summary", Static)
+        assert "42" in str(block.render())
+
+
 async def test_command_palette_registered():
     async with _make_app().run_test() as pilot:
         assert SiftyCommands in type(pilot.app).COMMANDS
