@@ -4,12 +4,36 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sifty"
-version = "0.1.0"
-description = "Sifty — an AI-assisted Windows maintenance CLI: sift junk, analyze disk, manage apps, updates and files."
+version = "0.5.0"
+description = "Sifty — an AI-assisted Windows maintenance CLI/TUI: sift junk, analyze disks, manage apps, updates and files. Recycle Bin only, dry-run by default."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Amine Zouaoui" }]
 license = { text = "MIT" }
+keywords = [
+    "windows", "maintenance", "cleaner", "junk", "disk-usage", "duplicates",
+    "uninstaller", "winget", "tui", "textual", "ollama",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://github.com/aminezouaoui/sifty"
+Repository = "https://github.com/aminezouaoui/sifty"
+Issues = "https://github.com/aminezouaoui/sifty/issues"
+Changelog = "https://github.com/aminezouaoui/sifty/blob/main/CHANGELOG.md"
 dependencies = [
     "typer>=0.12",
     "rich>=13.7",
@@ -28,6 +52,7 @@ dev = [
     "pytest-mock>=3.12",
     "pytest-asyncio>=0.23",
     "textual-dev>=1.5",
+    "ruff>=0.4",
 ]
 
 [project.scripts]
@@ -43,3 +68,15 @@ sifty = ["tui/*.tcss"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E501",  # line length is advisory; Rich markup strings run long
+    "B008",  # `typer.Option(...)` in defaults is Typer's standard idiom
+]
