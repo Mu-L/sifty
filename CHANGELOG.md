@@ -4,34 +4,34 @@ All notable changes to Sifty. The format loosely follows
 [Keep a Changelog](https://keepachangelog.com); versions before the first
 public release were development milestones.
 
-## [0.6.0] — 2026-06
+## [0.6.0] - 2026-06
 
 ### Added
 
-- **Uninstall leftovers scanner** — `sifty apps leftovers "App"` finds the
+- **Uninstall leftovers scanner**: `sifty apps leftovers "App"` finds the
   directories and Start Menu shortcuts an uninstaller left behind in
   AppData/ProgramData (conservative exact-name matching, never inside
   Windows/Program Files). The CLI reports leftovers automatically after an
   uninstall; the Apps TUI offers to clean them right after a bulk uninstall.
-- **`sifty config`** — show / get / set / reset / edit the configuration
+- **`sifty config`**: show / get / set / reset / edit the configuration
   without hunting through `%APPDATA%` (writes only your overrides).
-- **Browser cache coverage** — every Chrome/Edge/Brave/Vivaldi profile
+- **Browser cache coverage**: every Chrome/Edge/Brave/Vivaldi profile
   (Cache, Code Cache, GPUCache) plus Firefox `cache2`; cache dirs only,
   never cookies/history/passwords.
-- **Crash-report junk categories** — per-user crash dumps + WER queues, and
+- **Crash-report junk categories**: per-user crash dumps + WER queues, and
   system WER/kernel minidumps (admin).
-- **`sifty organize undo`** — moves the last organize session's files back
+- **`sifty organize undo`**: moves the last organize session's files back
   and removes the emptied folders.
 
 ### Changed
 
 - **Home** is now the checkup: findings carry direct fix buttons (clean junk,
-  clean stale downloads, apply updates — each behind the usual confirm) and
+  clean stale downloads, apply updates, each behind the usual confirm) and
   the redundant stat-card grid is gone.
-- **AI chat approvals are inline** — Run/Skip buttons in the transcript
+- **AI chat approvals are inline**: Run/Skip buttons in the transcript
   instead of a pop-up modal; quick-action buttons removed.
 - **Startup screen** matches the Services pattern: highlight a row, then
-  Enable/Disable buttons — clicking a row no longer toggles it instantly.
+  Enable/Disable buttons; clicking a row no longer toggles it instantly.
 - Bare group commands (`sifty junk`, `sifty disk`, …) print their full help
   instead of a "try --help" hint.
 
@@ -41,20 +41,20 @@ public release were development milestones.
   admin) instead of silently looking like it did nothing on a re-clean.
 - Self-update version-check failures are logged instead of swallowed.
 
-## [0.5.0] — 2026-06
+## [0.5.0] - 2026-06
 
 ### Added
 
-- **Checkup** — a read-only full-suite health scan (`sifty checkup` and a
+- **Checkup**: a read-only full-suite health scan (`sifty checkup` and a
   Home-screen hero button): junk, pending updates, registry orphans, stale
   downloads, low disk space, and startup bloat in one report, each finding
   with a one-tap action.
-- **AI follow-up actions** — when an AI tool scan finds something, the result
+- **AI follow-up actions**: when an AI tool scan finds something, the result
   card offers a button that jumps to the screen that can act on it.
 - **Self-update** (`sifty selfupdate`) via PyPI + pipx.
 - **Git worktree cleanup**: detect and prune orphaned git worktrees
   (`Worktrees` mode in Smart cleanup).
-- **VHD compaction** — compact WSL2/Hyper-V virtual disks via DISM.
+- **VHD compaction**: compact WSL2/Hyper-V virtual disks via DISM.
 - Installer intelligence: the Downloads-installers junk category only flags
   installers whose app is already installed.
 
@@ -73,19 +73,19 @@ public release were development milestones.
   orphan directory exists on disk.
 - Registry orphan scanner filters SystemComponent and winget-managed entries.
 
-## [0.4.0] — 2026
+## [0.4.0] - 2026
 
 - NTFS-aware duplicate detection (hardlinks counted once), concurrent junk
   scanning and hashing, registry orphan detection (read-only), apps-screen
   orphan panel.
 
-## [0.3.0] — 2026
+## [0.3.0] - 2026
 
 - Dev artifact purge (`node_modules`, `dist`, `__pycache__`, …), system optimize
   (DNS flush, thumbnail/prefetch/update-cache rebuild, DISM component
   cleanup), five new junk categories.
 
-## [0.2.0] — 2026
+## [0.2.0] - 2026
 
 - Layered architecture (core / windows / infra / cli / tui), smart cleanup
   (duplicates, large files, stale downloads), startup manager (reversible),
@@ -94,7 +94,7 @@ public release were development milestones.
   scripting output, agentic AI with autonomy levels, live system monitor,
   on-demand UAC elevation, command palette, crash logging.
 
-## [0.1.0] — 2026
+## [0.1.0] - 2026
 
 - Initial release: junk scan/clean, disk analysis, duplicate finder, app
   list/uninstall (winget), updates via winget, file organization, local-AI

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/social-preview.png" alt="Sifty — sift the junk from the keep" width="760">
+  <img src="docs/social-preview.png" alt="Sifty: sift the junk from the keep" width="760">
 </p>
 
 <h1 align="center">Sifty</h1>
@@ -12,7 +12,7 @@
 </p>
 
 Clean junk, analyze disks, find duplicates, manage apps and startup programs,
-apply updates, prune dev artifacts and git worktrees, and organize files — from
+apply updates, prune dev artifacts and git worktrees, and organize files, from
 a scriptable CLI or a full-screen terminal UI. The optional AI assistant runs
 **locally** via [Ollama]: nothing leaves your machine, and it only ever sees
 file *metadata* (names, sizes, paths), never file contents.
@@ -23,14 +23,15 @@ file *metadata* (names, sizes, paths), never file contents.
 
 Sifty deletes files and changes system state, so it is built to be hard to misuse:
 
-- **Dry-run by default** — every destructive command previews what it would do.
-  Real changes need an explicit `--apply`.
-- **Recycle Bin, never permanent delete** — all removals go through one
-  `trash()` function backed by Send2Trash. `sifty undo` restores the last clean.
-- **Protected paths** — `C:\Windows`, `Program Files`, `ProgramData`, the drive
+- **Dry-run by default.** Every destructive command previews what it would do;
+  real changes need an explicit `--apply`.
+- **Recycle Bin, never permanent delete.** All removals go through one
+  `trash()` function backed by Send2Trash, and `sifty undo` restores the last
+  clean.
+- **Protected paths.** `C:\Windows`, `Program Files`, `ProgramData`, the drive
   root and your profile root are refused even with `--apply --yes`.
-- **Audit log** — every applied deletion is recorded in `%APPDATA%\sifty\audit.log`.
-- **The AI never deletes anything** — it is advisory; high-risk tool calls
+- **Audit log.** Every applied deletion is recorded in `%APPDATA%\sifty\audit.log`.
+- **The AI never deletes anything.** It is advisory; high-risk tool calls
   always require your approval.
 
 ## How it compares
@@ -130,28 +131,28 @@ sifty config edit            # open config.toml in your editor
 sifty ai status
 sifty ai ask "what can I safely delete on my C drive?" --path C:\
 
-# Scripting — JSON output on read-only commands (auto-enabled when piped)
+# Scripting: JSON output on read-only commands (auto-enabled when piped)
 sifty --json checkup
 sifty --json disk volumes
 sifty --json apps list --by-size
 ```
 
 Some operations (Windows temp, update cache, certain uninstalls) need an
-**Administrator** terminal — `sifty doctor` tells you if you're elevated, and
+**Administrator** terminal. `sifty doctor` tells you if you're elevated, and
 `sifty --admin <cmd>` relaunches elevated via UAC.
 
 ## The TUI
 
-`sifty tui` opens a full-screen app with a seven-section sidebar — Home,
-Clean, Disk, Apps, Monitor, Reports, AI:
+`sifty tui` opens a full-screen app with a seven-section sidebar (Home,
+Clean, Disk, Apps, Monitor, Reports, AI):
 
-- **Home** — volume gauges and a **Run checkup** button that scans everything
+- **Home**: volume gauges and a **Run checkup** button that scans everything
   at once; findings come with buttons that fix them right there (clean junk,
-  clean stale downloads, apply updates — each behind a confirm).
-- **Clean** — Junk / Purge / Optimize / Smart cleanup under one roof (tabs).
-- **Apps** — Installed / Updates / Startup / Services, with fuzzy filter,
+  clean stale downloads, apply updates, each behind a confirm).
+- **Clean**: Junk / Purge / Optimize / Smart cleanup under one roof (tabs).
+- **Apps**: Installed / Updates / Startup / Services, with fuzzy filter,
   sorting, bulk uninstall, and an automatic leftover scan after uninstalling.
-- **AI** — an agentic chat: tool runs it proposes show **Run/Skip buttons
+- **AI**: an agentic chat where proposed tool runs show **Run/Skip buttons
   inline in the conversation**, and scan results carry follow-up action
   buttons.
 
@@ -165,7 +166,7 @@ space reclaimed over time with an **Undo last clean** button.
 2. Pull the configured model: `ollama pull qwen2.5:3b`.
 3. `sifty ai status` should report "running".
 
-Configure everything with the `sifty config` command — no need to hand-edit
+Configure everything with the `sifty config` command, no need to hand-edit
 files:
 
 ```powershell
@@ -182,7 +183,7 @@ the keys you change, so defaults keep flowing through on upgrades.
 
 ## Architecture
 
-Layered — thin frontends over a reusable engine, OS specifics quarantined:
+Layered: thin frontends over a reusable engine, OS specifics quarantined:
 
 ```text
 src/sifty/

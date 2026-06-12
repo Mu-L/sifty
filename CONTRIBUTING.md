@@ -2,7 +2,7 @@
 
 Thanks for your interest! Sifty is a Windows maintenance tool, so most changes
 need a Windows machine to test on (the unit tests themselves are
-cross-platform — the Windows environment is mocked).
+cross-platform; the Windows environment is mocked).
 
 ## The prime directive: safety
 
