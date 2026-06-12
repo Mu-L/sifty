@@ -1,12 +1,8 @@
 <p align="center">
-  <img src="docs/logo.png" alt="Sifty" width="160">
+  <img src="docs/social-preview.png" alt="Sifty — sift the junk from the keep" width="760">
 </p>
 
 <h1 align="center">Sifty</h1>
-
-<p align="center">
-  <em>An AI-assisted Windows maintenance CLI + TUI that <b>sifts the junk from the keep</b>.</em>
-</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
