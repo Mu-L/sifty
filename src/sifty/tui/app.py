@@ -48,7 +48,6 @@ SECTIONS: list[tuple[str, str]] = [
     ("clean", "Clean"),
     ("disk", "Disk"),
     ("apps", "Apps"),
-    ("updates", "Updates"),
     ("monitor", "Monitor"),
     ("reports", "Reports"),
     ("ai", "AI"),

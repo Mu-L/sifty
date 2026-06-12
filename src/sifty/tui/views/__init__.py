@@ -1,9 +1,10 @@
 """Content views — one per sidebar section.
 
-The sidebar now lists eight top-level sections; the "free up space" and
-"installed software" screens are consolidated into the tabbed ``CleanView`` and
-``AppsSystemView`` groups (see ``group.py``). The individual sub-views still
-exist and stay reachable via ``SUBVIEW_ROUTES`` (deep-linking into a tab).
+The sidebar now lists seven top-level sections; the "free up space" and
+"installed software" screens (including Updates) are consolidated into the
+tabbed ``CleanView`` and ``AppsSystemView`` groups (see ``group.py``). The
+individual sub-views still exist and stay reachable via ``SUBVIEW_ROUTES``
+(deep-linking into a tab).
 """
 
 from __future__ import annotations
@@ -29,13 +30,12 @@ from .services import ServicesView
 from .startup import StartupView
 from .updates import UpdatesView
 
-# Maps a sidebar nav key to its view class (the eight top-level sections).
+# Maps a sidebar nav key to its view class (the seven top-level sections).
 VIEWS = {
     "home": HomeView,
     "clean": CleanView,
     "disk": DiskView,
     "apps": AppsSystemView,
-    "updates": UpdatesView,
     "monitor": MonitorView,
     "reports": ReportsView,
     "ai": AIView,

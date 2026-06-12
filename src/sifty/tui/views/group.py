@@ -22,6 +22,7 @@ from .optimize import OptimizeView
 from .purge import PurgeView
 from .services import ServicesView
 from .startup import StartupView
+from .updates import UpdatesView
 
 
 class TabGroupView(BaseView):
@@ -75,6 +76,7 @@ class AppsSystemView(TabGroupView):
 
     TABS = [
         ("apps", "Installed", AppsView),
+        ("updates", "Updates", UpdatesView),
         ("startup", "Startup", StartupView),
         ("services", "Services", ServicesView),
     ]
@@ -88,6 +90,7 @@ SUBVIEW_ROUTES: dict[str, tuple[str, str]] = {
     "purge": ("clean", "purge"),
     "optimize": ("clean", "optimize"),
     "cleanup": ("clean", "cleanup"),
+    "updates": ("apps", "updates"),
     "startup": ("apps", "startup"),
     "services": ("apps", "services"),
 }
@@ -98,6 +101,7 @@ SUBVIEW_LABELS: dict[str, str] = {
     "purge": "Purge",
     "optimize": "Optimize",
     "cleanup": "Smart cleanup",
+    "updates": "Updates",
     "startup": "Startup",
     "services": "Services",
 }
