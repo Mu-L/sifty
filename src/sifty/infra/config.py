@@ -105,3 +105,61 @@ def load_config(path: Path | None = None) -> Config:
             user_data = tomllib.load(fh)
         return Config(data=_deep_merge(DEFAULTS, user_data))
     return Config()
+
+
+# ---------------------------------------------------------------------------
+# Writing user overrides (for `sifty config set/edit`)
+# ---------------------------------------------------------------------------
+
+def read_user_config(path: Path | None = None) -> dict[str, Any]:
+    """The raw user override file (NOT merged with defaults); {} if missing."""
+    target = path or config_path()
+    if not target.exists():
+        return {}
+    with target.open("rb") as fh:
+        return tomllib.load(fh)
+
+
+def _toml_value(value: Any) -> str:
+    """Serialize one scalar/list value as a TOML literal."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(_toml_value(v) for v in value) + "]"
+    escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def save_user_config(data: dict[str, Any], path: Path | None = None) -> None:
+    """Write the user override dict back as TOML (two-level: sections of scalars).
+
+    Only the *overrides* are persisted — anything absent keeps its default, so
+    upgrading Sifty can still change defaults the user never touched.
+    """
+    target = path or config_path()
+    lines: list[str] = []
+    for section, values in data.items():
+        if not isinstance(values, dict) or not values:
+            continue
+        lines.append(f"[{section}]")
+        for key, value in values.items():
+            lines.append(f"{key} = {_toml_value(value)}")
+        lines.append("")
+    target.write_text("\n".join(lines), encoding="utf-8")
+
+
+def default_template() -> str:
+    """A fully-commented config template showing every setting and its default."""
+    lines = [
+        "# Sifty configuration — uncomment a line to override its default.",
+        "# Run `sifty config show` to see the resolved values.",
+        "",
+    ]
+    for section, values in DEFAULTS.items():
+        lines.append(f"[{section}]")
+        for key, value in values.items():
+            lines.append(f"# {key} = {_toml_value(value)}")
+        lines.append("")
+    return "\n".join(lines)

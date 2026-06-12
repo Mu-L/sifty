@@ -18,6 +18,7 @@ from .commands import (
     ai_group,
     apps,
     cleanup,
+    config_cmd,
     disk,
     junk,
     optimize,
@@ -52,6 +53,7 @@ app.add_typer(updates.app, name="update")
 app.add_typer(organize.app, name="organize")
 app.add_typer(watch.app, name="watch")
 app.add_typer(ai_group.app, name="ai")
+app.add_typer(config_cmd.app, name="config")
 
 
 @app.callback()
