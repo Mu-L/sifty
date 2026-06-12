@@ -13,8 +13,7 @@ a scriptable CLI or a full-screen terminal UI. The optional AI assistant runs
 **locally** via [Ollama]: nothing leaves your machine, and it only ever sees
 file *metadata* (names, sizes, paths), never file contents.
 
-<!-- TODO: add a demo GIF of `sifty tui` here — it sells the project better
-     than anything below. `textual run --dev` + any screen recorder works. -->
+![Sifty demo](docs/demo.gif)
 
 ## Safety first
 
