@@ -8,31 +8,8 @@ Sifty ships two artifacts per release, both automated by
 2. **`sifty.exe`** — a standalone Windows executable attached to the GitHub
    Release (no Python needed to run it).
 
-## One-time setup (do this once)
-
-### 1. Create a PyPI account
-
-Sign up at <https://pypi.org/account/register/>. The project name `sifty` is
-currently unclaimed; the first successful publish claims it.
-
-### 2. Register the GitHub repo as a Trusted Publisher
-
-Because the project doesn't exist on PyPI yet, add a **pending** publisher:
-
-1. Go to <https://pypi.org/manage/account/publishing/>.
-2. Under "Add a new pending publisher", fill in:
-   - **PyPI Project Name:** `sifty`
-   - **Owner:** `Vortrix5`
-   - **Repository name:** `sifty`
-   - **Workflow name:** `release.yml`
-   - **Environment name:** `pypi`
-3. Save.
-
-### 3. (Recommended) Add a GitHub environment named `pypi`
-
-In the GitHub repo: **Settings → Environments → New environment → `pypi`**.
-You can add a required-reviewer protection rule here so a human approves each
-publish. The workflow's `environment: pypi` already points at it.
+PyPI publishing is configured via Trusted Publishing (OIDC) against the repo's
+`pypi` environment — no tokens are stored.
 
 ## Cutting a release
 
@@ -63,11 +40,33 @@ installed version against PyPI and upgrades via pipx.
 
 ## Community installers (winget / scoop)
 
-After a release publishes and `sifty.exe` is attached, finalize the manifests
-in [`packaging/`](../packaging/README.md): fill in the exe's SHA256, then
-submit the winget manifests to microsoft/winget-pkgs and/or publish the scoop
-manifest. These must happen *after* the release because they reference the
-exe's URL and hash.
+- **scoop** — the bucket at <https://github.com/Vortrix5/scoop-bucket> uses
+  `checkver` + `autoupdate`, so new releases are picked up automatically by
+  `scoop update` / excavator. No per-release action needed.
+- **winget** — bump the manifests in [`packaging/winget/`](../packaging/winget/)
+  to the new version + SHA256 and submit with
+  `wingetcreate update Vortrix5.Sifty --version <v> --urls <exe-url>` (it
+  computes the hash and opens the winget-pkgs PR). Do this *after* the release,
+  since it needs the exe URL + hash.
+
+## Code signing (optional)
+
+`sifty.exe` is currently **unsigned**, so Windows SmartScreen shows an
+"unknown publisher" prompt on first run (click *More info → Run anyway*). To
+remove it, sign the exe in the `windows-exe` job between the build and upload
+steps. Options, cheapest first:
+
+- **[SignPath](https://about.signpath.io/product/open-source)** — free
+  certificate + GitHub Action for OSS projects. Best fit here.
+- **[Azure Trusted Signing](https://learn.microsoft.com/azure/trusted-signing/)**
+  — ~$10/month, Microsoft-run, has an official GitHub Action.
+- An **EV code-signing certificate** — instant SmartScreen reputation, but
+  pricey and needs a hardware/cloud HSM. OV certs are cheaper but still have to
+  accrue reputation.
+
+Self-signing does **not** help with SmartScreen. Whichever you pick, the
+signing credential goes in a GitHub Actions secret and the signing step runs in
+CI — the release stays fully automated.
 
 ## Manual build (local, for testing)
 

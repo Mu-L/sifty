@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" alt="Sifty" width="160">
+</p>
+
 # Sifty
 
 > An AI-assisted Windows maintenance CLI + TUI that **sifts the junk from the keep**.
