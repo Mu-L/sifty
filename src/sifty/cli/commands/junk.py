@@ -9,7 +9,7 @@ from ...console import confirm, console, human_size, success, warn
 from ...core import history, junk
 from .. import output
 
-app = typer.Typer(help="Scan and clean junk files (temp, caches, update cache).")
+app = typer.Typer(no_args_is_help=True, help="Scan and clean junk files (temp, caches, update cache).")
 
 
 @app.command("scan")

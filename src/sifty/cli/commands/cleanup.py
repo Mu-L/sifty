@@ -12,7 +12,7 @@ from ...console import confirm, console, human_size, success, warn
 from ...core import cleanup, disk, history
 from .. import output
 
-app = typer.Typer(help="Smart cleanup: duplicate files, large files, stale downloads.")
+app = typer.Typer(no_args_is_help=True, help="Smart cleanup: duplicate files, large files, stale downloads.")
 
 
 @app.command("duplicates")

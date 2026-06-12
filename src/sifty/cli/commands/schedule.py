@@ -9,7 +9,7 @@ from ...console import console, error, success
 from ...core import profiles, schedule
 from .. import output
 
-app = typer.Typer(help="Schedule cleanup profiles to run automatically.")
+app = typer.Typer(no_args_is_help=True, help="Schedule cleanup profiles to run automatically.")
 
 
 @app.command("add")

@@ -9,7 +9,7 @@ from ...console import console, error, success
 from ...core import history, services
 from .. import output
 
-app = typer.Typer(help="Toggle a vetted set of optional Windows services (needs admin to change).")
+app = typer.Typer(no_args_is_help=True, help="Toggle a vetted set of optional Windows services (needs admin to change).")
 
 
 @app.command("list")

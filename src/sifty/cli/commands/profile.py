@@ -10,7 +10,7 @@ from ...core import junk, profiles
 from ...core.models import Profile
 from .. import output
 
-app = typer.Typer(help="Saved cleanup profiles (presets of junk categories).")
+app = typer.Typer(no_args_is_help=True, help="Saved cleanup profiles (presets of junk categories).")
 
 
 @app.command("list")

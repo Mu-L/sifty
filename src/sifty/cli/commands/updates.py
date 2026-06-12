@@ -9,7 +9,7 @@ from ...console import confirm, console, error, success, warn
 from ...core import updates
 from .. import output
 
-app = typer.Typer(help="Check and apply application updates (winget).")
+app = typer.Typer(no_args_is_help=True, help="Check and apply application updates (winget).")
 
 
 @app.command("check")

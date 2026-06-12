@@ -14,7 +14,7 @@ class _null:
     def __enter__(self): return self
     def __exit__(self, *_): return False
 
-app = typer.Typer(help="List, inspect, and remove installed apps and startup items.")
+app = typer.Typer(no_args_is_help=True, help="List, inspect, and remove installed apps and startup items.")
 
 
 @app.command("list")

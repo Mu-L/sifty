@@ -9,7 +9,7 @@ from ...console import console, error, success
 from ...core import startup
 from .. import output
 
-app = typer.Typer(help="Manage programs that run at startup (reversible).")
+app = typer.Typer(no_args_is_help=True, help="Manage programs that run at startup (reversible).")
 
 
 @app.command("list")

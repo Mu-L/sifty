@@ -10,7 +10,7 @@ from rich.table import Table
 from ...console import confirm, console, success, warn
 from ...core import organize
 
-app = typer.Typer(help="Organize files in a folder by type or date.")
+app = typer.Typer(no_args_is_help=True, help="Organize files in a folder by type or date.")
 
 
 @app.command("preview")

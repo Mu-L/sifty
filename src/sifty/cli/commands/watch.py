@@ -9,7 +9,7 @@ from ...core import schedule, watch
 from ...windows import notify, scheduler
 from .. import output
 
-app = typer.Typer(help="Watch free disk space; toast when it gets low.")
+app = typer.Typer(no_args_is_help=True, help="Watch free disk space; toast when it gets low.")
 
 
 @app.command("check")

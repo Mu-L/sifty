@@ -11,7 +11,7 @@ from ...console import confirm, console, human_size, success, warn
 from ...core import history, purge
 from .. import output
 
-app = typer.Typer(help="Find and remove dev artifact directories (node_modules, dist, __pycache__, …).")
+app = typer.Typer(no_args_is_help=True, help="Find and remove dev artifact directories (node_modules, dist, __pycache__, …).")
 
 
 @app.command("scan")

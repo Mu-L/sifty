@@ -12,7 +12,7 @@ from ...ai.client import OllamaClient
 from ...console import console, error, human_size, success, warn
 from ...core import disk
 
-app = typer.Typer(help="Ask the local AI for maintenance advice (Ollama).")
+app = typer.Typer(no_args_is_help=True, help="Ask the local AI for maintenance advice (Ollama).")
 
 
 @app.command("status")

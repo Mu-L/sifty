@@ -12,7 +12,7 @@ from ...console import console, human_size, warn
 from ...core import disk
 from .. import output
 
-app = typer.Typer(help="Analyze disks: volume usage, biggest items, duplicates.")
+app = typer.Typer(no_args_is_help=True, help="Analyze disks: volume usage, biggest items, duplicates.")
 
 
 @app.command("volumes")

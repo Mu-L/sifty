@@ -10,7 +10,7 @@ from ...core import optimize
 from ...windows.admin import is_admin
 from .. import output
 
-app = typer.Typer(help="Non-destructive system optimization: DNS, caches, Prefetch, DISM.")
+app = typer.Typer(no_args_is_help=True, help="Non-destructive system optimization: DNS, caches, Prefetch, DISM.")
 
 
 @app.command("list")
