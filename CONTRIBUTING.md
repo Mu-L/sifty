@@ -26,6 +26,19 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pytest -q     # should be green (~20s)
 ```
 
+### Git hooks (optional but recommended)
+
+We use [pre-commit](https://pre-commit.com) to run the same checks CI does, but
+locally. After the dev install:
+
+```powershell
+pre-commit install     # runs ruff on commit and pytest on push
+```
+
+The pre-push test run uses your active environment, so push from the venv. You
+can bypass a hook in a pinch with `git commit --no-verify`, but CI still
+enforces the checks on the PR.
+
 ## Project layout
 
 Layered: `cli`/`tui` (thin frontends) → `core` (engine) → `windows` (OS
