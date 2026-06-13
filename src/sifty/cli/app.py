@@ -178,7 +178,22 @@ def selfupdate_cmd(
     check_only: bool = typer.Option(False, "--check", help="Only check for updates, do not upgrade."),
 ) -> None:
     """Check PyPI for a newer Sifty version and upgrade via pipx."""
-    from ..core.selfupdate import apply_update, check_update
+    from ..core.selfupdate import apply_update, check_update, current_version, editable_install_path
+
+    src = editable_install_path()
+    if src is not None:
+        if output.json_enabled():
+            output.emit(
+                {"current": current_version(), "editable": True, "source": src, "update_available": False}
+            )
+            return
+        warn("Sifty is running from an editable dev install, so selfupdate is disabled.")
+        console.print(f"[dim]Source: {src}[/dim]")
+        console.print(
+            "[dim]Update it with [cyan]git pull[/cyan] "
+            "(re-run [cyan]pip install -e .[/cyan] if dependencies changed).[/dim]"
+        )
+        return
 
     with console.status("Checking PyPI for updates…"):
         current, latest = check_update()
