@@ -16,13 +16,13 @@ jobs:
     steps:
       - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: >
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          issue_message: >
             Thanks for opening your first issue on Sifty! A maintainer will take
             a look soon. If this is a bug, the most helpful details are your
             Windows version, Python version, the exact command you ran, and the
             tail of `sifty logs`.
-          pr-message: >
+          pr_message: >
             Thanks for your first pull request to Sifty! A couple of things that
             help it land quickly: Sifty deletes files, so all deletion must go
             through `safety.trash()` and destructive paths default to dry-run.
