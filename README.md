@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="docs/social-preview.png" alt="Sifty: sift the junk from the keep" width="760">
+  <img src="docs/logo.png" alt="Sifty" width="200">
 </p>
 
 <h1 align="center">Sifty</h1>
+
+<p align="center"><em>Sift the junk from the keep.</em></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
