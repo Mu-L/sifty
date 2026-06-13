@@ -1,18 +1,17 @@
-# Local git hooks via the pre-commit framework (https://pre-commit.com).
-# Python-native equivalent of Husky. Set up once after a dev install:
+# Optional local git hook via the pre-commit framework (https://pre-commit.com).
+# Python-native alternative to Husky. Fully opt-in: nothing runs unless a
+# contributor chooses to enable it after a dev install:
 #
 #   pip install -e ".[dev]"
-#   pre-commit install        # installs both the pre-commit and pre-push hooks
+#   pre-commit install
 #
-# These mirror the CI gate so failures show up locally first. Skip in a pinch
-# with `git commit --no-verify`, but CI still enforces them on the PR.
-
-default_install_hook_types: [pre-commit, pre-push]
+# It runs ruff (the same lint CI runs) on changed files before each commit, so
+# style issues surface locally instead of failing the PR. Tests are left to CI.
+# Skip in a pinch with `git commit --no-verify`.
 
 repos:
   - repo: local
     hooks:
-      # Lint on every commit (same as CI's `ruff check .`).
       - id: ruff
         name: ruff (lint)
         entry: ruff check --force-exclude
@@ -20,12 +19,3 @@ repos:
         additional_dependencies: ["ruff>=0.4"]
         types_or: [python, pyi]
         require_serial: true
-
-      # Run the test suite before pushing (same as CI). Needs the dev install.
-      - id: pytest
-        name: pytest
-        entry: python -m pytest -q
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
