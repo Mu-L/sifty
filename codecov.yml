@@ -1,12 +1,16 @@
-# Coverage is informational for now: it reports on PRs but never fails them.
+# Coverage is enforced: the whole src/sifty tree must stay at or above target.
 coverage:
   status:
     project:
       default:
-        informational: true
+        target: 85%
+        threshold: 1%          # tolerate matrix-job noise (py3.11 vs py3.13)
+        informational: false   # blocking
     patch:
       default:
-        informational: true
+        target: 80%
+        threshold: 5%
+        informational: false
 
 comment:
   layout: "reach, diff, files"
