@@ -350,7 +350,7 @@ def checkup_cmd() -> None:
     console.print(table)
     issues = sum(1 for f in findings if f.severity != "ok")
     if issues:
-        console.print(f"[bold]{issues}[/bold] item(s) worth a look - checkup never changes anything itself.")
+        console.print(f"[bold]{issues:,}[/bold] item(s) worth a look - checkup never changes anything itself.")
     else:
         success("All clear - nothing needs attention.")
 
@@ -459,16 +459,16 @@ def undo_cmd(
         console.print("Nothing to undo - no restorable items in history.")
         return
     if not confirm(
-        f"Restore {run.restorable} item(s) from the {run.action} clean at {run.ts}?",
+        f"Restore {run.restorable:,} item(s) from the {run.action} clean at {run.ts}?",
         assume_yes=yes,
     ):
         warn("Cancelled.")
         return
     with console.status("Restoring from the Recycle Bin…"):
         restored, failed = undo.undo(run.id)
-    success(f"Restored {restored} item(s).")
+    success(f"Restored {restored:,} item(s).")
     if failed:
-        warn(f"{failed} item(s) could not be restored (see `sifty logs`).")
+        warn(f"{failed:,} item(s) could not be restored (see `sifty logs`).")
 
 
 def entrypoint() -> None:
