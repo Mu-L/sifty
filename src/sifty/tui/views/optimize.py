@@ -101,11 +101,17 @@ class OptimizeView(BaseView):
         self.app.call_from_thread(self._done)
 
     def _update_row(self, row_key: str, status: tuple[str, str], detail: str) -> None:
+        # The worker runs in a thread; if the user switched views mid-run the
+        # view is already unmounted, so there's nothing (and no table) to update.
+        if not self.is_mounted:
+            return
         icon, color = status
         table = self.query_one("#results-table", DataTable)
         table.update_cell(row_key, self._col_status, self._cell(icon, color))
         table.update_cell(row_key, self._col_detail, detail)
 
     def _done(self) -> None:
+        if not self.is_mounted:
+            return
         self.query_one("#run", Button).disabled = False
         self._set_status("")

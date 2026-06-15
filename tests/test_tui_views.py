@@ -341,8 +341,9 @@ async def test_optimize_run_selected(monkeypatch):
         await pilot.pause()
         await pilot.pause()
         await pilot.click("#run")
-        await pilot.pause()
-        await pilot.pause()
+        # Drain the run worker before the context tears the app down, otherwise
+        # its thread keeps updating the table after the view unmounts.
+        await pilot.app.workers.wait_for_complete()
         await pilot.pause()
         assert pilot.app.query_one("#results-panel").display
 
@@ -356,8 +357,7 @@ async def test_optimize_run_op_error(monkeypatch):
         await pilot.pause()
         await pilot.pause()
         await pilot.click("#run")
-        await pilot.pause()
-        await pilot.pause()
+        await pilot.app.workers.wait_for_complete()
         await pilot.pause()
         assert pilot.app.query_one("#results-panel").display
 
