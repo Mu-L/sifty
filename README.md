@@ -105,7 +105,7 @@ When running `sifty junk scan` or `sifty junk clean`, the engine targets the fol
 ```powershell
 pipx install sifty       # recommended (isolated); or: pip install sifty
 scoop bucket add sifty https://github.com/Vortrix5/scoop-bucket; scoop install sifty
-winget install Vortrix5.Sifty            # once the winget-pkgs PR is merged
+winget install Vortrix5.Sifty
 
 sifty doctor             # check admin rights, winget, Ollama
 ```
