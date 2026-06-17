@@ -76,11 +76,11 @@ open-source cousin; it is cross-platform and can securely shred files, while
 Sifty stays Windows-only, sends everything to the Recycle Bin with full undo,
 and adds duplicates, app management and developer cleanups.
 
-### Cleaned Junk Categories
+## Cleaned junk categories
 
 When running `sifty junk scan` or `sifty junk clean`, the engine targets the following categories extracted directly from `junk_categories()`:
 
-#### Always-On Categories
+### Always-on categories
 
 - **`user-temp`**: Per-user temporary files (`%TEMP%` or `%TMP%`).
 - **`thumbnail-cache`**: Explorer thumbnail and icon cache (rebuilt automatically).
@@ -95,7 +95,7 @@ When running `sifty junk scan` or `sifty junk clean`, the engine targets the fol
 - **`defender-history`** _(Requires Admin)_: Windows Defender scan detection history logs.
 - **`system-crash-reports`** _(Requires Admin)_: System-wide crash reports and kernel minidumps (`WER`, `Minidump`).
 
-#### Off by Default (Opt-in via configuration)
+### Off by default (opt-in via configuration)
 
 - **`downloads-installers`**: Installer files (`.exe`/`.msi`) in your Downloads folder. Can be enabled via `sifty config set junk.include_downloads_installers true`.
 - **`windows-old`** _(Requires Admin)_: Leftovers from previous Windows installations after a feature update (`C:\Windows.old`). Can be enabled via `sifty config set junk.include_windows_old true`.
