@@ -48,6 +48,8 @@ jobs:
           pyinstaller --onefile --name sifty --paths src --console
           --icon packaging/installer/sifty.ico
           --collect-submodules win32com --hidden-import win32timezone
+          --collect-submodules textual
+          --add-data "src/sifty/tui/styles.tcss;sifty/tui"
           packaging/exe_entry.py
       - name: Smoke-test the exe
         run: ./dist/sifty.exe version
