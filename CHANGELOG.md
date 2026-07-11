@@ -4,6 +4,28 @@ All notable changes to Sifty. The format loosely follows
 [Keep a Changelog](https://keepachangelog.com); versions before the first
 public release were development milestones.
 
+## [0.8.0] - 2026-07
+
+### Added
+
+- **The AI remembers your machine.** The chat now persists across restarts,
+  and Sifty learns your habits - the categories you routinely clean and the
+  actions you tend to decline feed into the AI's context so its advice matches
+  how you actually use the tool. Everything stays local: names, sizes and
+  counts only, never file contents.
+- **Per-tool AI policies**: set any agent tool to `auto` (run without asking),
+  `ask` (always confirm), or `never` (block it) with
+  `sifty ai policy set <tool> <auto|ask|never>`; `sifty ai policy list` shows
+  every tool, its risk, and what will happen. These layer on top of the global
+  autonomy level, so you can auto-clean junk but always confirm an uninstall.
+- **`sifty ai autonomy`**: show or set the global autonomy level from the CLI
+  (previously only the TUI dropdown).
+
+### Changed
+
+- The agent no longer re-runs the same read-only scan twice within a single
+  request, so multi-step answers come back faster.
+
 ## [0.7.0] - 2026-07
 
 ### Added

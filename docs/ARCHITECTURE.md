@@ -92,7 +92,19 @@ Anything else (`os.remove`, `shutil.rmtree`, …) is a bug.
 `ai/client.py` wraps the Ollama HTTP API. `is_available()` is checked before every
 use so a missing/stopped Ollama degrades to "no AI" rather than an error.
 `ai/advisor.py` builds prompts from **metadata only** and is the sole place prompts
-live. The AI never receives a deletion capability: commands act, the AI advises.
+live; the advisor itself only explains and recommends, it never acts.
+
+`ai/agent.py` is the agentic loop: the model may call tools from `ai/tools.py`,
+each tagged `read` / `low` / `high`. Whether a call runs, prompts for confirmation,
+or is blocked follows the global autonomy level plus optional per-tool policies
+(`ai/policy.py`, stored in `ai_state.json`). The AI has no privileged path around
+safety - every tool that deletes routes through `core.safety.trash()`, so protected
+paths are refused and everything is audited whether a human or the agent triggered it.
+
+`ai/context.py` builds the metadata-only machine snapshot, now including lightweight
+learned preferences. `core/ai_memory.py` (a separate `ai_memory.db`, kept out of the
+`history.db` undo ledger) persists the chat transcript and the tool skips those
+preferences are derived from.
 
 ## Testing strategy
 

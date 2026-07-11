@@ -178,6 +178,9 @@ sifty config edit            # open config.toml in your editor
 # AI (requires Ollama running)
 sifty ai status
 sifty ai ask "what can I safely delete on my C drive?" --path C:\
+sifty ai autonomy low_risk_auto        # how much the agent does before asking
+sifty ai policy set clean_junk auto    # per-tool: auto / ask / never
+sifty ai policy list                   # see every tool and what it will do
 
 # Scripting: JSON output on read-only commands (auto-enabled when piped)
 sifty --json checkup
@@ -202,7 +205,9 @@ Clean, Disk, Apps, Monitor, Reports, AI):
   sorting, bulk uninstall, and an automatic leftover scan after uninstalling.
 - **AI**: an agentic chat where proposed tool runs show **Run/Skip buttons
   inline in the conversation**, and scan results carry follow-up action
-  buttons.
+  buttons. The conversation persists across restarts, and Sifty learns which
+  categories you routinely clean and which actions you decline so its advice
+  fits how you actually use it.
 
 Press **Ctrl+P** for the command palette (jump to any screen), **F2** to
 elevate, **Space** to mark rows for bulk actions. The **Reports** screen shows
