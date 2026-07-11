@@ -29,6 +29,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
 from ..infra.config import app_data_dir, load_config
+from . import policy
 from .client import OllamaClient, OllamaUnavailable
 from .tools import TOOLS, Tool, ToolResult
 from .tools import get as get_tool
@@ -37,6 +38,10 @@ logger = logging.getLogger("sifty.ai")
 
 _MAX_ITERATIONS = 10
 _VALID_LEVELS = ("ask", "low_risk_auto", "full_auto")
+
+# Read-risk tools whose results are cached within a single run() call so the
+# model doesn't re-scan. system_status is excluded - it's a live snapshot.
+_NO_CACHE = {"system_status"}
 
 # Appended to the system prompt in agentic mode so the model adds insight rather
 # than re-dumping data the UI already renders as tables.
@@ -93,6 +98,28 @@ def _override_file():
     return app_data_dir() / "ai_state.json"
 
 
+def _read_state() -> dict:
+    """The full agent-state dict, robust to a missing/bad/unreadable file."""
+    try:
+        path = _override_file()
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                return data
+    except Exception:
+        logger.debug("could not read ai_state.json", exc_info=True)
+    return {}
+
+
+def _write_state(state: dict) -> bool:
+    try:
+        _override_file().write_text(json.dumps(state), encoding="utf-8")
+        return True
+    except OSError:
+        logger.exception("failed to persist ai_state.json")
+        return False
+
+
 def autonomy_from_config(config=None) -> str:
     config = config or load_config()
     return config.section("ai").get("autonomy", "ask")
@@ -100,27 +127,22 @@ def autonomy_from_config(config=None) -> str:
 
 def current_autonomy(config=None) -> str:
     """The active autonomy level: user override file wins, else config default."""
-    path = _override_file()
-    if path.exists():
-        try:
-            val = json.loads(path.read_text(encoding="utf-8")).get("autonomy")
-            if val in _VALID_LEVELS:
-                return val
-        except (ValueError, OSError):
-            pass
+    val = _read_state().get("autonomy")
+    if val in _VALID_LEVELS:
+        return val
     return autonomy_from_config(config)
 
 
 def set_autonomy(level: str) -> bool:
-    """Persist the active autonomy level. Returns False for an invalid level."""
+    """Persist the active autonomy level. Returns False for an invalid level.
+
+    Read-modify-write so it never clobbers per-tool policies in the same file.
+    """
     if level not in _VALID_LEVELS:
         return False
-    try:
-        _override_file().write_text(json.dumps({"autonomy": level}), encoding="utf-8")
-        return True
-    except OSError:
-        logger.exception("failed to persist autonomy level")
-        return False
+    state = _read_state()
+    state["autonomy"] = level
+    return _write_state(state)
 
 
 def _needs_confirm(risk: str, autonomy: str) -> bool:
@@ -134,6 +156,30 @@ def _needs_confirm(risk: str, autonomy: str) -> bool:
     return True  # "ask" confirms low+high; "low_risk_auto" confirms high
 
 
+def _resolve_action(tool: Tool, autonomy: str, tool_policy: str = "default") -> str:
+    """Return ``"run"`` | ``"confirm"`` | ``"skip"`` for this tool.
+
+    A per-tool policy overrides the global autonomy; ``"default"`` defers to it.
+    """
+    if tool_policy == "never":
+        return "skip"
+    if tool_policy == "auto":
+        return "run"
+    if tool_policy == "ask":
+        return "confirm"
+    return "confirm" if _needs_confirm(tool.risk, autonomy) else "run"
+
+
+def _record_skip(tool: Tool, args: dict) -> None:
+    """Best-effort record of a declined tool, for learned preferences."""
+    try:
+        from ..core.ai_memory import record_skip
+        target = str(args.get("categories") or args.get("name") or args.get("id") or "")
+        record_skip(tool.name, target)
+    except Exception:
+        logger.debug("skip not recorded", exc_info=True)
+
+
 # ---------------------------------------------------------------------------
 # Agent loop
 # ---------------------------------------------------------------------------
@@ -145,6 +191,7 @@ def run(
     autonomy: str = "ask",
     confirm: Callable[[str], bool] | None = None,
     tools: list[Tool] | None = None,
+    cache: dict | None = None,
 ) -> Iterator[AgentEvent]:
     """Drive an agentic conversation and yield :data:`AgentEvent` instances.
 
@@ -152,6 +199,10 @@ def run(
     system message). ``confirm`` is called with a human-readable prompt when a
     tool requires confirmation; return ``True`` to proceed, ``False`` to skip.
     Defaults to always-refuse (safe) when not provided.
+
+    Per-tool policies (see :mod:`sifty.ai.policy`) override the global autonomy.
+    ``cache`` is an optional dict reused across read-tool calls to avoid
+    re-scanning; a fresh one per call (the default) dedups within this run only.
     """
     if confirm is None:
         confirm = lambda _: False  # noqa: E731 - safe default, not interactive
@@ -159,6 +210,8 @@ def run(
     active_tools = tools if tools is not None else TOOLS
     schemas = [t.to_ollama() for t in active_tools]
     tool_map = {t.name: t for t in active_tools}
+    policies = policy.all_policies()
+    cache = {} if cache is None else cache
 
     current_messages = list(messages)
 
@@ -196,18 +249,31 @@ def run(
 
             yield ToolCallEvent(tool_name=name, args=args, risk=tool.risk)
 
-            if _needs_confirm(tool.risk, autonomy):
-                if not confirm(_confirm_prompt(tool, args)):
-                    result_text = f"(user declined to run {name})"
-                    yield ToolResultEvent(tool_name=name, result=result_text, skipped=True)
-                    current_messages.append({"role": "tool", "content": result_text})
-                    continue
+            action = _resolve_action(tool, autonomy, policies.get(name, "default"))
+            if action == "skip":
+                result_text = f"(skipped {name}: blocked by your 'never' policy)"
+                yield ToolResultEvent(tool_name=name, result=result_text, skipped=True)
+                current_messages.append({"role": "tool", "content": result_text})
+                continue
+            if action == "confirm" and not confirm(_confirm_prompt(tool, args)):
+                _record_skip(tool, args)
+                result_text = f"(user declined to run {name})"
+                yield ToolResultEvent(tool_name=name, result=result_text, skipped=True)
+                current_messages.append({"role": "tool", "content": result_text})
+                continue
 
-            try:
-                result = tool.handler(args)
-            except Exception as exc:
-                logger.exception("tool %s failed", name)
-                result = ToolResult(summary=f"Error running {name}: {exc}")
+            cache_key = (name, json.dumps(args, sort_keys=True)) \
+                if tool.risk == "read" and name not in _NO_CACHE else None
+            if cache_key is not None and cache_key in cache:
+                result = cache[cache_key]
+            else:
+                try:
+                    result = tool.handler(args)
+                except Exception as exc:
+                    logger.exception("tool %s failed", name)
+                    result = ToolResult(summary=f"Error running {name}: {exc}")
+                if cache_key is not None and isinstance(result, ToolResult):
+                    cache[cache_key] = result
 
             if isinstance(result, ToolResult):
                 result_text = result.summary

@@ -43,6 +43,7 @@ from ...ai.agent import (
 )
 from ...ai.client import OllamaClient, OllamaUnavailable
 from ...ai.tools import TOOLS as ALL_TOOLS
+from ...core import ai_memory
 from .base import BaseView
 
 logger = logging.getLogger("sifty.tui")
@@ -95,9 +96,11 @@ class AIView(BaseView):
         # In-flight inline approval: (worker wake event, result holder, chat row).
         self._pending: tuple[threading.Event, dict, Horizontal] | None = None
         self._autonomy = current_autonomy()
-        # Conversation + context persist on the app, surviving navigation.
-        self._messages: list[dict] = getattr(self.app, "_ai_messages", None) or []
-        self.app._ai_messages = self._messages
+        # Conversation persists on the app across navigation and, seeded once per
+        # session from ai_memory.db, across restarts too.
+        if getattr(self.app, "_ai_messages", None) is None:
+            self.app._ai_messages = ai_memory.recent_messages(20)
+        self._messages: list[dict] = self.app._ai_messages
         self._system: str | None = getattr(self.app, "_ai_system", None)
         self._replay_history()
         if self.workers_enabled():
@@ -148,6 +151,7 @@ class AIView(BaseView):
         log = self.query_one("#chat-log", VerticalScroll)
         log.mount(Static(f"[b cyan]You[/b cyan]  {escape(question)}", classes="msg-user"))
         self._messages.append({"role": "user", "content": question})
+        ai_memory.append_message("user", question)
         self._thinking = Static("[dim]Sifty is thinking…[/dim]", classes="msg-thinking")
         log.mount(self._thinking)
         log.scroll_end(animate=False)
@@ -256,6 +260,7 @@ class AIView(BaseView):
     def _remember(self, answer: str) -> None:
         if answer:
             self._messages.append({"role": "assistant", "content": answer})
+            ai_memory.append_message("assistant", answer)
 
     # --------------------------------------------------- UI helpers (main thread)
     def _log(self) -> VerticalScroll:

@@ -15,7 +15,7 @@ from ..console import human_size
 
 
 def build(*, include_junk: bool = True, include_volumes: bool = True,
-          include_history: bool = True) -> str:
+          include_history: bool = True, include_preferences: bool = True) -> str:
     """Return a Markdown-formatted system context string for injection into prompts."""
     sections: list[str] = []
 
@@ -31,6 +31,11 @@ def build(*, include_junk: bool = True, include_volumes: bool = True,
 
     if include_history:
         section = _history_section()
+        if section:
+            sections.append(section)
+
+    if include_preferences:
+        section = _preferences_section()
         if section:
             sections.append(section)
 
@@ -89,4 +94,22 @@ def _history_section() -> str:
     ]
     for r in runs[:3]:
         lines.append(f"- {r.ts[:10]}: {r.action} - {human_size(r.bytes_freed)} freed")
+    return "\n".join(lines)
+
+
+def _preferences_section() -> str:
+    """What this user routinely does / declines, so advice matches their habits."""
+    try:
+        from ..core.ai_memory import learned_preferences
+        prefs = learned_preferences()
+    except Exception:
+        return ""
+    if prefs.is_empty:
+        return ""
+    lines = ["**Learned preferences:**"]
+    if prefs.always_clean:
+        lines.append("- Routinely cleans: " + ", ".join(prefs.always_clean))
+    skips = prefs.often_skipped or prefs.avoided_tools
+    if skips:
+        lines.append("- Tends to decline: " + ", ".join(skips))
     return "\n".join(lines)
