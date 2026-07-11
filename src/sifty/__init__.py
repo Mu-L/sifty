@@ -1,3 +1,3 @@
 """Sifty: a Windows maintenance CLI that sifts the junk from the keep."""
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"

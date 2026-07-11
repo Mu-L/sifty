@@ -12,7 +12,7 @@
 ; Output lands in dist\sifty-setup.exe (next to the bare exe it wraps).
 
 #ifndef AppVersion
-  #define AppVersion "0.6.0"
+  #define AppVersion "0.7.0"
 #endif
 
 #define AppName "Sifty"

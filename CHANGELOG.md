@@ -4,6 +4,37 @@ All notable changes to Sifty. The format loosely follows
 [Keep a Changelog](https://keepachangelog.com); versions before the first
 public release were development milestones.
 
+## [0.7.0] - 2026-07
+
+### Added
+
+- **Discord cache cleanup**: the junk cleaner now covers Discord's `Cache`,
+  `Code Cache`, and `GPUCache` directories - cache only, never tokens or
+  message history.
+- **Windows installer**: a graphical `sifty-setup.exe` (Inno Setup) with a
+  Welcome / License / Install / Finish wizard that adds Sifty to PATH and
+  registers an Add/Remove Programs entry, alongside the existing portable exe.
+
+### Changed
+
+- **Item counts read with thousands separators** across the CLI (e.g.
+  `12,480 files` instead of `12480`).
+- **Worktree cleanup** is now described by what it detects - any prunable git
+  worktree, not just coding-agent leftovers - so it also matches CI checkouts
+  and abandoned experiments.
+
+### Fixed
+
+- **`sifty tui` no longer crashes in the packaged exe.** Textual imports its
+  widgets lazily, so PyInstaller left `textual.widgets._tab_pane` (and the
+  `styles.tcss` stylesheet) out of the build and the TUI died on launch. Both
+  are now bundled. Affected winget / scoop / installer users only; pip and
+  pipx installs were fine.
+- **Optimize no longer crashes when you navigate away mid-run.** The
+  background worker now no-ops once its view is unmounted instead of raising.
+- **Self-update is disabled on editable (`-e`) installs** instead of offering
+  a phantom upgrade that then fails and can half-rebuild the venv.
+
 ## [0.6.0] - 2026-06
 
 ### Added
